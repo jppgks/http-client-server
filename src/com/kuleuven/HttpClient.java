@@ -3,15 +3,23 @@ package com.kuleuven;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.Socket;
 import java.net.URL;
+import java.net.UnknownHostException;
 
 public class HttpClient {
     public static void main(String args[]) {
         // Parse arguments [HTTPCommand, URI, Port] into request
         Request request = generateRequestFromArgs(args);
+        
+        try {
+			request.executeSockets();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
-        // Execute request and handle response
-        handleResponse(request.execute());
+//        // Execute request and handle response
+//        handleResponse(request.execute());
     }
 
     /**
@@ -69,6 +77,9 @@ class Request {
 
     Request(String method, String URI, String port, String content) {
         this.method = method;
+        this.URI = URI;
+        this.port = Integer.parseInt(port);
+        
         try {
             // source: http://stackoverflow.com/questions/2793150/using-java-net-urlconnection-to-fire-and-handle-http-requests
             URL url = new URL("http", URI, Integer.parseInt(port), "");
@@ -91,8 +102,28 @@ class Request {
      * Content of PUT or POST request
      */
     private final String content;
+    
+    private final String URI;
+    
+    private final int port;
 
-    /**
+    private String getMethod() {
+		return method;
+	}
+
+	private String getContent() {
+		return content;
+	}
+
+	private String getURI() {
+		return URI;
+	}
+
+	private int getPort() {
+		return port;
+	}
+
+	/**
      * HTTP connection to URL
      */
     private HttpURLConnection connection;
@@ -128,6 +159,35 @@ class Request {
         }
 
         return response;
+    }
+    
+    Response executeSockets() throws UnknownHostException, IOException {
+    	Socket clientSocket = new Socket(getURI(), getPort());
+    	
+    	DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
+    	BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+    	outToServer.writeBytes(getMethod() + " /kuleuven/ HTTP/1.0" + "\n" + "\n");
+    	
+    	if (getMethod() == "PUT" || getMethod() == "POST") {
+    		// post content
+    		
+    		outToServer.writeBytes(getContent());
+    	}
+    	
+    	String line;
+    	while ((line = inFromServer.readLine()) != null) {
+    		System.out.println(line);
+    	}
+    	
+    	outToServer.close();
+    	inFromServer.close();
+    	clientSocket.close();
+    	
+    	Response response = new Response();
+    	// response.setContent(clientSocket.getInputStream());
+    	// set status code, initial line contains status code (see resource in assignment)
+    	
+		return response;
     }
 }
 
