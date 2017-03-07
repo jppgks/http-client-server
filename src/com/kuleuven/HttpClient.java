@@ -166,7 +166,7 @@ class Request {
     	
     	DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
     	BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-    	outToServer.writeBytes(getMethod() + " /kuleuven/ HTTP/1.0" + "\n" + "\n");
+    	outToServer.writeBytes(getMethod() + " /index.html HTTP/1.1" + "\r\n" + "Host: " + getURI() + ":" + getPort() + "\r\n\r\n");
     	
     	if (getMethod() == "PUT" || getMethod() == "POST") {
     		// post content
