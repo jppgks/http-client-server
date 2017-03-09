@@ -1,11 +1,10 @@
 package com.kuleuven;
 
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.nio.file.Files;
+import java.util.Random;
 
 public class HttpClient {
     public static void main(String args[]) {
@@ -97,11 +96,13 @@ class Request {
         String readLine;
         try {
             while (((readLine = br.readLine()) != null)) {
+                if (readLine.isEmpty()) {
+                    break;
+                }
                 sb.append(readLine);
                 sb.append("\n");
             }
-        } catch (SocketTimeoutException socketTimeoutException) {
-            // Silently continue
+        } catch (SocketTimeoutException ignored) {
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -165,9 +166,10 @@ class Request {
      */
     private Response generateResponse(BufferedReader inFromServer) throws IOException {
         int statusCode = Integer.parseInt(inFromServer.readLine().split(" ")[1]);
+        String header = stringFromBufferedReader(inFromServer);
         String content = stringFromBufferedReader(inFromServer);
 
-        return new Response(statusCode, content);
+        return new Response(statusCode, header, content);
     }
 }
 
@@ -177,10 +179,12 @@ class Request {
 class Response {
 
     private int statusCode;
+    private String header;
     private String content;
 
-    Response(int statusCode, String content) throws IOException {
+    Response(int statusCode, String header, String content) throws IOException {
         this.statusCode = statusCode;
+        this.header = header;
         this.content = content;
     }
 
@@ -193,13 +197,33 @@ class Response {
     }
 
     /**
-     * Prints the status code and content to standard output.
+     * Prints the status code and content to standard output and generates local html file from content.
      * <p>
-     * TODO: Store content to local .html file + retrieve and store other objects on the page
+     * TODO: Retrieve and store other objects on the page
      */
     void handle() {
+        // Print to standard output
         System.out.println("Status code: " + this.statusCode);
         System.out.println();
+        System.out.print(this.header);
+        System.out.println();
         System.out.print(this.content);
+
+        // Save to local HTML file
+        int randInt = new Random().nextInt();
+        File file = new File("output/response" + Integer.toString(randInt) + ".html");
+        try {
+            file.getParentFile().mkdir();
+            file.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            Files.write(file.toPath(), content.getBytes());
+            System.out.println();
+            System.out.println("HTML written to: " + file.getPath());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
