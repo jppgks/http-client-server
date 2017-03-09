@@ -1,10 +1,14 @@
 package com.kuleuven;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Random;
 
 enum Method {
@@ -52,7 +56,7 @@ public class HttpClient {
 }
 
 /**
- * Houses HTTP method to use, URI + port and content to post (if any).
+ * Houses HTTP method to use, URI + port and body to post (if any).
  * Also establishes an HTTP connection with host.
  */
 class Request {
@@ -63,7 +67,7 @@ class Request {
     /**
      * Content of PUT or POST request
      */
-    private final String content;
+    private final String body;
     private final String URI;
     private final int port;
 
@@ -78,7 +82,7 @@ class Request {
     }
 
     /**
-     * Construct request object with empty content.
+     * Construct request object with empty body.
      *
      * @param method HTTP method
      * @param URI    Host URI
@@ -91,16 +95,16 @@ class Request {
     /**
      * Full-fledged constructor, initializing all fields of the request object.
      *
-     * @param method  HTTP method
-     * @param URI     Host URI
-     * @param port    Port on host to connect at
-     * @param content Content to write to host
+     * @param method HTTP method
+     * @param URI    Host URI
+     * @param port   Port on host to connect at
+     * @param body   Content to write to host
      */
-    private Request(Method method, String URI, int port, String content) {
+    private Request(Method method, String URI, int port, String body) {
         this.method = method;
         this.URI = URI;
         this.port = port;
-        this.content = content;
+        this.body = body;
     }
 
     /**
@@ -130,8 +134,8 @@ class Request {
         return method;
     }
 
-    private String getContent() {
-        return content;
+    private String getBody() {
+        return body;
     }
 
     private String getURI() {
@@ -161,8 +165,8 @@ class Request {
         outToServer.writeBytes(initialLine + requestHeader);
 
         if (this.method == Method.PUT || this.method == Method.POST) {
-            // post content
-            outToServer.writeBytes(getContent());
+            // post body
+            outToServer.writeBytes(getBody());
         }
 
         Response response = generateResponse(inFromServer);
@@ -175,18 +179,25 @@ class Request {
     }
 
     /**
-     * Returns a response object with status code and content read from the BufferedReader.
+     * Returns a response object with status code and body read from the BufferedReader.
      *
      * @param inFromServer Server response BufferedReader
-     * @return Response object with status code and content read from the BufferedReader
+     * @return Response object with status code and body read from the BufferedReader
      * @throws IOException If an I/O error occurs.
      */
     private Response generateResponse(BufferedReader inFromServer) throws IOException {
         int statusCode = Integer.parseInt(inFromServer.readLine().split(" ")[1]);
-        String header = stringFromBufferedReader(inFromServer);
-        String content = stringFromBufferedReader(inFromServer);
 
-        return new Response(statusCode, header, content);
+        String header = stringFromBufferedReader(inFromServer);
+        HashMap<String, String> headerDict = new HashMap<>();
+        for (String headerLine : header.split("\n")) {
+            int sepIndex = headerLine.indexOf(":");
+            headerDict.put(headerLine.substring(0, sepIndex), headerLine.substring(sepIndex + 1).trim());
+        }
+
+        String body = stringFromBufferedReader(inFromServer);
+
+        return new Response(statusCode, headerDict, body);
     }
 }
 
@@ -196,51 +207,61 @@ class Request {
 class Response {
 
     private int statusCode;
-    private String header;
-    private String content;
+    private HashMap<String, String> header;
+    private Document body;
 
-    Response(int statusCode, String header, String content) throws IOException {
+    Response(int statusCode, HashMap<String, String> header, String body) throws IOException {
         this.statusCode = statusCode;
         this.header = header;
-        this.content = content;
+        this.body = Jsoup.parse(body);
     }
 
     int getStatusCode() {
         return statusCode;
     }
 
-    String getContent() {
-        return content;
+    Document getBody() {
+        return body;
     }
 
     /**
-     * Prints the status code and content to standard output and generates local html file from content.
+     * Prints the status code and body to standard output and generates local html file from body.
      * <p>
      * TODO: Retrieve and store other objects on the page
      */
     void handle() {
         // Print to standard output
-        System.out.println("Status code: " + this.statusCode);
-        System.out.println();
-        System.out.print(this.header);
-        System.out.println();
-        System.out.print(this.content);
+        print();
 
         // Save to local HTML file
+        saveToLocalHTMLFile();
+    }
+
+    private void saveToLocalHTMLFile() {
         int randInt = new Random().nextInt();
         File file = new File("output/response" + Integer.toString(randInt) + ".html");
+        // Create output file and directory (if non-existent)
         try {
             file.getParentFile().mkdir();
             file.createNewFile();
         } catch (IOException e) {
             e.printStackTrace();
         }
+        // Write response body to file
         try {
-            Files.write(file.toPath(), content.getBytes());
+            Files.write(file.toPath(), body.outerHtml().getBytes());
             System.out.println();
             System.out.println("HTML written to: " + file.getPath());
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void print() {
+        System.out.println("Status code: " + this.statusCode);
+        System.out.println();
+        this.header.forEach((key, value) -> System.out.println(key + ": " + value));
+        System.out.println();
+        System.out.print(this.body);
     }
 }
