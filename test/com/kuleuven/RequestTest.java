@@ -8,13 +8,13 @@ import static org.junit.Assert.assertThat;
 
 public class RequestTest {
     private String URI;
-    private String method;
+    private Method method;
     private int port;
     private Request request;
 
     @Before
     public void setUp() throws Exception {
-        this.method = "GET";
+        this.method = Method.GET;
         this.URI = "www.kuleuven.be";
         this.port = 80;
         this.request = new Request(this.method, this.URI, this.port);

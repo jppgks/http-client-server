@@ -4,7 +4,22 @@ import java.io.*;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.Random;
+
+enum Method {
+    GET("GET"), PUT("PUT"), POST("POST"), HEAD("HEAD");
+
+    private String name;
+
+    Method(String name) {
+        this.name = name;
+    }
+
+    String getName() {
+        return name;
+    }
+}
 
 public class HttpClient {
     public static void main(String args[]) {
@@ -29,8 +44,10 @@ public class HttpClient {
      */
     private static Request generateRequestFromArgs(String[] args) {
         assert args.length == 3;
+        // Check support for requested method
+        assert Arrays.stream(Method.values()).anyMatch(e -> e.getName().equals(args[0])) : "Given HTTP method not supported";
         // Parse command line arguments (HTTPCommand, URI, Port)
-        return new Request(args[0], args[1], Integer.parseInt(args[2]));
+        return new Request(Method.valueOf(args[0]), args[1], Integer.parseInt(args[2]));
     }
 }
 
@@ -42,7 +59,7 @@ class Request {
     /**
      * @value HEAD, GET, PUT or POST
      */
-    private final String method;
+    private final Method method;
     /**
      * Content of PUT or POST request
      */
@@ -56,7 +73,7 @@ class Request {
      * @param method HTTP method
      * @param URI    Host URI
      */
-    Request(String method, String URI) {
+    Request(Method method, String URI) {
         this(method, URI, 80);
     }
 
@@ -67,7 +84,7 @@ class Request {
      * @param URI    Host URI
      * @param port   Port on host to connect at
      */
-    Request(String method, String URI, int port) {
+    Request(Method method, String URI, int port) {
         this(method, URI, port, "");
     }
 
@@ -79,7 +96,7 @@ class Request {
      * @param port    Port on host to connect at
      * @param content Content to write to host
      */
-    private Request(String method, String URI, int port, String content) {
+    private Request(Method method, String URI, int port, String content) {
         this.method = method;
         this.URI = URI;
         this.port = port;
@@ -109,7 +126,7 @@ class Request {
         return sb.toString();
     }
 
-    private String getMethod() {
+    private Method getMethod() {
         return method;
     }
 
@@ -143,7 +160,7 @@ class Request {
         String requestHeader = "Host: " + getURI() + ":" + getPort() + "\r\n\r\n";
         outToServer.writeBytes(initialLine + requestHeader);
 
-        if (getMethod().equals("PUT") || getMethod().equals("POST")) {
+        if (this.method == Method.PUT || this.method == Method.POST) {
             // post content
             outToServer.writeBytes(getContent());
         }
