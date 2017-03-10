@@ -1,4 +1,4 @@
-package com.kuleuven;
+package http;
 
 import org.junit.Before;
 

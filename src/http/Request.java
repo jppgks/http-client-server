@@ -1,65 +1,18 @@
-package com.kuleuven;
+package http;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
-import java.nio.file.Files;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Random;
-
-enum Method {
-    GET("GET"), PUT("PUT"), POST("POST"), HEAD("HEAD");
-
-    private String name;
-
-    Method(String name) {
-        this.name = name;
-    }
-
-    String getName() {
-        return name;
-    }
-}
-
-public class HttpClient {
-    public static void main(String args[]) {
-        // Parse arguments [HTTPCommand, URI, Port] into request
-        Request request = generateRequestFromArgs(args);
-
-        try {
-            // Execute request
-            Response response = request.execute();
-            // Display response
-            response.handle();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Creates a Request object from command line arguments
-     *
-     * @param args [HTTPCommand, URI, Port]
-     * @return Request with given HTTP method, URI and port number
-     */
-    private static Request generateRequestFromArgs(String[] args) {
-        assert args.length == 3;
-        // Check support for requested method
-        assert Arrays.stream(Method.values()).anyMatch(e -> e.getName().equals(args[0])) : "Given HTTP method not supported";
-        // Parse command line arguments (HTTPCommand, URI, Port)
-        return new Request(Method.valueOf(args[0]), args[1], Integer.parseInt(args[2]));
-    }
-}
 
 /**
  * Houses HTTP method to use, URI + port and body to post (if any).
  * Also establishes an HTTP connection with host.
  */
-class Request {
+public class Request {
     /**
      * @value HEAD, GET, PUT or POST
      */
@@ -88,7 +41,7 @@ class Request {
      * @param URI    Host URI
      * @param port   Port on host to connect at
      */
-    Request(Method method, String URI, int port) {
+    public Request(Method method, String URI, int port) {
         this(method, URI, port, "");
     }
 
@@ -100,7 +53,7 @@ class Request {
      * @param port   Port on host to connect at
      * @param body   Content to write to host
      */
-    private Request(Method method, String URI, int port, String body) {
+    public Request(Method method, String URI, int port, String body) {
         this.method = method;
         this.URI = URI;
         this.port = port;
@@ -151,7 +104,7 @@ class Request {
      *
      * @return Response object with resulting status code and contents of the executed request.
      */
-    Response execute() throws IOException {
+    public Response execute() throws IOException {
         Socket clientSocket = new Socket(getURI(), getPort());
 
         // Time out on read when server is unresponsive for the given amount of time.
@@ -198,70 +151,5 @@ class Request {
         String body = stringFromBufferedReader(inFromServer);
 
         return new Response(statusCode, headerDict, body);
-    }
-}
-
-/**
- * Stores relevant response attributes.
- */
-class Response {
-
-    private int statusCode;
-    private HashMap<String, String> header;
-    private Document body;
-
-    Response(int statusCode, HashMap<String, String> header, String body) throws IOException {
-        this.statusCode = statusCode;
-        this.header = header;
-        this.body = Jsoup.parse(body);
-    }
-
-    int getStatusCode() {
-        return statusCode;
-    }
-
-    Document getBody() {
-        return body;
-    }
-
-    /**
-     * Prints the status code and body to standard output and generates local html file from body.
-     * <p>
-     * TODO: Retrieve and store other objects on the page
-     */
-    void handle() {
-        // Print to standard output
-        print();
-
-        // Save to local HTML file
-        saveToLocalHTMLFile();
-    }
-
-    private void saveToLocalHTMLFile() {
-        int randInt = new Random().nextInt();
-        File file = new File("output/response" + Integer.toString(randInt) + ".html");
-        // Create output file and directory (if non-existent)
-        try {
-            file.getParentFile().mkdir();
-            file.createNewFile();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        // Write response body to file
-        try {
-            Files.write(file.toPath(), body.outerHtml().getBytes());
-            System.out.println();
-            System.out.println("HTML written to: " + file.getPath());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void print() {
-        System.out.println("Status code: " + this.statusCode);
-        System.out.println();
-        this.header.forEach((key, value) -> System.out.println(key + ": " + value));
-        System.out.println();
-        System.out.print(this.body);
     }
 }
