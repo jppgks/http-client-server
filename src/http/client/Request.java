@@ -155,6 +155,24 @@ public class Request {
 
         return new Response(statusCode, headerDict, body);
     }
+    
+    private void resetCharactersRead() {
+    	setCharactersRead(0);
+    }
+    
+    private void addCharactersRead(int number) {
+    	setCharactersRead(getCharactersRead() + number);
+    }
+    
+    private int getCharactersRead() {
+		return charactersRead;
+	}
+
+	private void setCharactersRead(int charactersRead) {
+		this.charactersRead = charactersRead;
+	}
+    
+    private int charactersRead;
 }
 
 enum StringType {
