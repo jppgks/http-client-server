@@ -69,4 +69,9 @@ public class Response {
         System.out.println();
         System.out.print(this.body);
     }
+
+    public String getRedirectLocation() {
+        // Get value of Location header
+        return this.header.get("Location");
+    }
 }

@@ -1,14 +1,11 @@
 package http.client;
 
-import org.junit.Before;
-
 import http.Method;
 import http.Response;
-import http.client.Request;
+import org.junit.Before;
 
-import static org.hamcrest.CoreMatchers.startsWith;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
 
 public class RequestTest {
     private String URI;
@@ -28,8 +25,7 @@ public class RequestTest {
     public void executeSocketsTest() throws Exception {
         Response response = request.execute();
         int statusCode = response.getStatusCode();
-        // Expected redirect to /kuleuven/
-        assertThat(Integer.toString(statusCode), startsWith("3"));
+        assertEquals(200, statusCode);
         // Expected to have a non-empty response body
         assertFalse(response.getBody().isEmpty());
     }
