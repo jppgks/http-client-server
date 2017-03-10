@@ -13,19 +13,19 @@ public class Response {
 
     private int statusCode;
     private HashMap<String, String> header;
-    private Document body;
+    private String body;
 
     Response(int statusCode, HashMap<String, String> header, String body) throws IOException {
         this.statusCode = statusCode;
         this.header = header;
-        this.body = Jsoup.parse(body);
+        this.body = body;
     }
 
     int getStatusCode() {
         return statusCode;
     }
 
-    Document getBody() {
+    String getBody() {
         return body;
     }
 
@@ -54,7 +54,7 @@ public class Response {
         }
         // Write response body to file
         try {
-            Files.write(file.toPath(), body.outerHtml().getBytes());
+            Files.write(file.toPath(), body.getBytes());
             System.out.println();
             System.out.println("HTML written to: " + file.getPath());
         } catch (IOException e) {

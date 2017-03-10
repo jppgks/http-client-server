@@ -27,7 +27,7 @@ public class RequestTest {
         // Expected redirect to /kuleuven/
         assertThat(Integer.toString(statusCode), startsWith("3"));
         // Expected to have a non-empty response body
-        assertFalse(response.getBody().outerHtml().isEmpty());
+        assertFalse(response.getBody().isEmpty());
     }
 
 }
