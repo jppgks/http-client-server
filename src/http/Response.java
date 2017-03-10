@@ -15,17 +15,17 @@ public class Response {
     private HashMap<String, String> header;
     private String body;
 
-    Response(int statusCode, HashMap<String, String> header, String body) throws IOException {
+    public Response(int statusCode, HashMap<String, String> header, String body) throws IOException {
         this.statusCode = statusCode;
         this.header = header;
         this.body = body;
     }
 
-    int getStatusCode() {
+    public int getStatusCode() {
         return statusCode;
     }
 
-    String getBody() {
+    public String getBody() {
         return body;
     }
 

@@ -1,6 +1,10 @@
-package http;
+package http.client;
 
 import org.junit.Before;
+
+import http.Method;
+import http.Response;
+import http.client.Request;
 
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.junit.Assert.assertFalse;

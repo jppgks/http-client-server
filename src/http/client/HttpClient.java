@@ -4,7 +4,6 @@ import java.io.*;
 import java.util.Arrays;
 
 import http.Method;
-import http.Request;
 import http.Response;
 
 public class HttpClient {

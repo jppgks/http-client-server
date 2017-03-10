@@ -1,4 +1,4 @@
-package http;
+package http.client;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -7,6 +7,9 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.HashMap;
+
+import http.Method;
+import http.Response;
 
 /**
  * Houses HTTP method to use, URI + port and body to post (if any).
@@ -65,12 +68,12 @@ public class Request {
      *
      * @param br InputStream to convert
      */
-    private static String stringFromBufferedReader(BufferedReader br) {
+    private static String stringFromBufferedReader(BufferedReader br, StringType type) {
         StringBuilder sb = new StringBuilder();
         String readLine;
         try {
             while (((readLine = br.readLine()) != null)) {
-                if (readLine.isEmpty()) {
+                if (readLine.isEmpty() && type == StringType.HEADER) {
                     break;
                 }
                 sb.append(readLine);
@@ -141,15 +144,19 @@ public class Request {
     private Response generateResponse(BufferedReader inFromServer) throws IOException {
         int statusCode = Integer.parseInt(inFromServer.readLine().split(" ")[1]);
 
-        String header = stringFromBufferedReader(inFromServer);
+        String header = stringFromBufferedReader(inFromServer, StringType.HEADER);
         HashMap<String, String> headerDict = new HashMap<>();
         for (String headerLine : header.split("\n")) {
             int sepIndex = headerLine.indexOf(":");
             headerDict.put(headerLine.substring(0, sepIndex), headerLine.substring(sepIndex + 1).trim());
         }
 
-        String body = stringFromBufferedReader(inFromServer);
+        String body = stringFromBufferedReader(inFromServer, StringType.BODY);
 
         return new Response(statusCode, headerDict, body);
     }
+}
+
+enum StringType {
+	HEADER, BODY;
 }
