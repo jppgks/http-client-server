@@ -166,16 +166,46 @@ public class Request {
     private Response generateResponse(BufferedReader inFromServer) throws IOException {
         int statusCode = Integer.parseInt(inFromServer.readLine().split(" ")[1]);
 
-        String header = stringFromBufferedReader(inFromServer, StringType.HEADER);
-        HashMap<String, String> headerDict = new HashMap<>();
-        for (String headerLine : header.split("\n")) {
-            int sepIndex = headerLine.indexOf(":");
-            headerDict.put(headerLine.substring(0, sepIndex), headerLine.substring(sepIndex + 1).trim());
-        }
+        HashMap<String, String> headerDict = readHeaders(inFromServer);
 
         String body = stringFromBufferedReader(inFromServer, StringType.BODY);
 
         return new Response(statusCode, headerDict, body);
+    }
+    
+    private HashMap<String,String> readHeaders(BufferedReader in) {
+		HashMap<String,String> headers = new HashMap<>();
+		
+		String header = null;
+		String value = null;
+		String line;
+		try {
+			while (((line = in.readLine()) != null)) {
+			    if (line.startsWith(" ") || line.startsWith("\t")) {
+			    	// lines beginning with spaces or tabs belong to the previous header line
+			    	line = line.trim();
+			    	value.concat(line);
+			    } else {
+			    	// put last header + value in map
+			    	if (header != null) {
+			    		headers.put(header, value);
+			    	}
+			    	
+			    	if (line.isEmpty()) {
+				        break;
+				    } else {
+				    	// read new header
+				    	header = line.substring(0, line.indexOf(":"));
+				    	value = line.substring(line.indexOf(":") + 1).trim();
+				    }
+			    }
+			    
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+    	return headers;
     }
 
     private void resetCharactersRead() {

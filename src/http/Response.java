@@ -31,7 +31,6 @@ public class Response {
 
     /**
      * Prints the status code and body to standard output and generates local html file from body.
-     * <p>
      * TODO: Retrieve and store other objects on the page
      */
     public void handle() {
