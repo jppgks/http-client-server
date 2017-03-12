@@ -3,6 +3,7 @@ package http.client;
 import http.Method;
 import http.Response;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -31,7 +32,6 @@ public class Request {
      */
     private String body;
     private URL url;
-    private int charactersRead;
 
     /**
      * Construct request object from given url.
@@ -70,7 +70,7 @@ public class Request {
     public Request(Method method, String host, int port, String body) {
         this.method = method;
         try {
-            this.url = new URL("http", host, port, "/");
+            this.url = new URL("http", host, port, "/#q=chunked+transfer+encoding");
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
@@ -121,6 +121,7 @@ public class Request {
         clientSocket.setSoTimeout(1000);
 
         DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
+        // BufferedInputStream streamInFromServer = new BufferedInputStream(clientSocket.getInputStream());
         BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
         // Write initial line and header
@@ -167,8 +168,9 @@ public class Request {
         int statusCode = Integer.parseInt(inFromServer.readLine().split(" ")[1]);
 
         HashMap<String, String> headerDict = readHeaders(inFromServer);
-
-        String body = stringFromBufferedReader(inFromServer, StringType.BODY);
+        
+        boolean chunkedTE = headerDict.containsKey("Transfer-Encoding") && "chunked".equals(headerDict.get("Transfer-Encoding"));
+        String body = readMessage(inFromServer, chunkedTE);
 
         return new Response(statusCode, headerDict, body);
     }
@@ -199,28 +201,72 @@ public class Request {
 				    	value = line.substring(line.indexOf(":") + 1).trim();
 				    }
 			    }
-			    
 			}
+		} catch (SocketTimeoutException ignored) {
 		} catch (IOException e) {
+			System.err.println("Something went wrong while reading the headers.");
 			e.printStackTrace();
 		}
 		
     	return headers;
     }
-
-    private void resetCharactersRead() {
-        setCharactersRead(0);
+    
+    private String readMessage(BufferedReader in, boolean chunkedTE) {
+    	StringBuilder sb = new StringBuilder();
+        String line;
+        int limit = 0;
+        try {
+            while (((line = in.readLine()) != null)) {
+            	if (chunkedTE) {
+            		if (this.getBytesRead() == limit) {
+            			// line with new limit
+            			System.err.println(line);
+            			if (line.contains(";")) {
+            				limit = Integer.parseInt(line.substring(0, line.indexOf(";")), 16);
+            			} else {
+            				limit = Integer.parseInt(line, 16);
+            			}
+            			
+            			if (limit == 0) {
+            				break;
+            			}
+            		} else {
+            			// just another regular line
+            			sb.append(line);
+            			addBytesRead(line.length());
+            			if (getBytesRead() < limit) {
+            				sb.append("\n");
+            				addBytesRead(1);
+            			}
+            		}
+            	} else {
+            		sb.append(line);
+                    sb.append("\n");
+            	}
+            }
+        } catch (SocketTimeoutException ignored) {
+        } catch (IOException e) {
+        	System.err.println("Something went wrong while reading the message.");
+            e.printStackTrace();
+        }
+        return sb.toString();
     }
 
-    private void addCharactersRead(int number) {
-        setCharactersRead(getCharactersRead() + number);
+    private void resetBytesRead() {
+        setBytesRead(0);
     }
 
-    private int getCharactersRead() {
-        return charactersRead;
+    private void addBytesRead(int number) {
+        setBytesRead(getBytesRead() + number);
     }
 
-    private void setCharactersRead(int charactersRead) {
-        this.charactersRead = charactersRead;
+    private int getBytesRead() {
+        return bytesRead;
     }
+
+    private void setBytesRead(int charactersRead) {
+        this.bytesRead = charactersRead;
+    }
+    
+    private int bytesRead;
 }
