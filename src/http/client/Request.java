@@ -162,7 +162,7 @@ public class Request {
     private String getInitialLineAndHeader(int port) {
         String initialLine = getMethod() + " " + url.getFile() + " HTTP/1.1" + "\r\n";
         // Get port from socket, because if it isn't initialized in the URL object, that will return -1
-        String requestHeader = "Host: " + url.getHost() + ":" + port + "\r\n\r\n";
+        String requestHeader = "Host: " + url.getHost() + "\r\n\r\n";
         return initialLine + requestHeader;
     }
 
