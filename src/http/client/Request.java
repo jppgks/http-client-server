@@ -1,19 +1,16 @@
 package http.client;
 
-import http.Method;
-import http.Response;
-
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.Socket;
-import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.HashMap;
+
+import http.Method;
+import http.Response;
 
 enum StringType {
     HEADER, BODY

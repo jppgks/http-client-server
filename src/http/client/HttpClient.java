@@ -1,10 +1,9 @@
 package http.client;
 
-import java.io.*;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Date;
 
 import http.Method;
@@ -20,7 +19,7 @@ public class HttpClient {
             Response response = request.execute();
             // Display response
             response.save("output/" + new Date().getTime() + "/");
-            response.handle();
+            response.print();
         } catch (IOException e) {
             e.printStackTrace();
         }
