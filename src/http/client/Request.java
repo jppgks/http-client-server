@@ -183,7 +183,7 @@ public class Request {
         
         byte[] body = readMessage(inFromServer, headerDict);
 
-        return new Response(statusCode, headerDict, body);
+        return new Response(statusCode, headerDict, body, url.getFile());
     }
     
     private HashMap<String,String> readHeaders(BufferedInputStream in) {
@@ -238,9 +238,7 @@ public class Request {
 		    			break;
 		    		}
 		    		// read chunk
-		    		byte[] test = readBytes(in, size);
-		    		System.out.println(new String(test));
-					stream.write(test);
+					stream.write(readBytes(in, size));
 	    		}
 	    	} else {
 	    		if (headers.containsKey("Content-Length")) {

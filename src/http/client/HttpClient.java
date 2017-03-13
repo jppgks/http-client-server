@@ -4,6 +4,8 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 
 import http.Method;
 import http.Response;
@@ -17,6 +19,7 @@ public class HttpClient {
             // Execute request
             Response response = request.execute();
             // Display response
+            response.save("output/" + new Date().getTime() + "/");
             response.handle();
         } catch (IOException e) {
             e.printStackTrace();
@@ -39,9 +42,9 @@ public class HttpClient {
         
         // remove protocol (if present)
         if (address.startsWith("http://")) {
-        	address.replaceFirst("http://", "");
+        	address = address.substring("http://".length());
         } else if (address.startsWith("https://")) {
-        	address.replaceFirst("https://", "");
+        	address = address.substring("https://".length());
         }
         
         String host;
