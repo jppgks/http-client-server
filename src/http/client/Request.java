@@ -5,6 +5,7 @@ import http.Response;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -70,34 +71,11 @@ public class Request {
     public Request(Method method, String host, int port, String body) {
         this.method = method;
         try {
-            this.url = new URL("http", host, port, "/xjs/_/js/k=xjs.hp.en_US.qWyNDPmYk0M.O/m=sb_he,d/rt=j/d=1/t=zcms/rs=ACT90oEWohnPC7Zc5rBqUA6n0TENwFJ3gA");
+            this.url = new URL("http", host, port, "/");
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
         this.body = body;
-    }
-
-    /**
-     * Stores contents of the given InputStream in a string.
-     *
-     * @param br InputStream to convert
-     */
-    private static String stringFromBufferedReader(BufferedReader br, StringType type) {
-        StringBuilder sb = new StringBuilder();
-        String readLine;
-        try {
-            while (((readLine = br.readLine()) != null)) {
-                if (readLine.isEmpty() && type == StringType.HEADER) {
-                    break;
-                }
-                sb.append(readLine);
-                sb.append("\n");
-            }
-        } catch (SocketTimeoutException ignored) {
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return sb.toString();
     }
 
     private Method getMethod() {
@@ -165,6 +143,20 @@ public class Request {
     	
 		return line;
     }
+    
+    private byte[] readBytes(BufferedInputStream in, int number) {
+		byte[] data = new byte[number];
+		int bytesRead = 0;
+		try {
+			bytesRead = in.read(data);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		if (bytesRead != number) {
+			throw new IllegalArgumentException("Could not read the specified amount of bytes");
+		}
+    	return data;
+    }
 
     private String getInitialLineAndHeader(int port) {
         String initialLine = getMethod() + " " + url.getFile() + " HTTP/1.1" + "\r\n";
@@ -185,8 +177,7 @@ public class Request {
 
         HashMap<String, String> headerDict = readHeaders(inFromServer);
         
-        boolean chunkedTE = headerDict.containsKey("Transfer-Encoding") && "chunked".equals(headerDict.get("Transfer-Encoding"));
-        String body = readMessage(inFromServer, chunkedTE);
+        byte[] body = readMessage(inFromServer, headerDict);
 
         return new Response(statusCode, headerDict, body);
     }
@@ -220,57 +211,46 @@ public class Request {
     	return headers;
     }
     
-    private String readMessage(BufferedInputStream in, boolean chunkedTE) {
-    	StringBuilder sb = new StringBuilder();
-        String line;
-        int limit = 0;
-        while (((line = readLine(in)) != null)) {
-			if (chunkedTE) {
-				if (this.getBytesRead() == limit) {
-					// line with new limit
-					System.err.println(line);
-					resetBytesRead();
-					if (line.contains(";")) {
-						limit = Integer.parseInt(line.substring(0, line.indexOf(";")), 16);
+    private byte[] readMessage(BufferedInputStream in, HashMap<String,String> headers) {
+    	boolean chunkedTE = headers.containsKey("Transfer-Encoding") && "chunked".equals(headers.get("Transfer-Encoding"));
+    	int size;
+    	ByteArrayOutputStream stream = new ByteArrayOutputStream();
+    	try {
+	    	if (chunkedTE) {
+	    		// Read chunked message
+	    		while (true) {
+		    		// read line with chunk size
+		    		String line = readLine(in);
+		    		if (line.contains(";")) {
+						size = Integer.parseInt(line.substring(0, line.indexOf(";")), 16);
 					} else {
-						limit = Integer.parseInt(line, 16);
+						size = Integer.parseInt(line, 16);
 					}
-					
-					if (limit == 0) {
-						break;
-					}
-				} else {
-					// just another regular line
-					sb.append(line);
-					addBytesRead(line.length());
-					if (getBytesRead() < limit) {
-						sb.append("\n");
-						addBytesRead(1);
-					}
-				}
-			} else {
-				sb.append(line);
-		        sb.append("\n");
-			}
-		}
-        return sb.toString();
+		    		
+		    		if (size == 0) {
+		    			break;
+		    		}
+		    		// read chunk
+					stream.write(readBytes(in, size));
+	    		}
+	    	} else {
+	    		if (headers.containsKey("Content-Length")) {
+	    			size = Integer.parseInt(headers.get("Content-Length"));
+	    			// read number of bytes specified by Content-Length
+					stream.write(readBytes(in, size));
+	    		} else {
+	    			// read to the end (until the connection is closed)
+	    			// read all bytes one by one
+	    			byte[] bt = new byte[1];
+	    			while ((bt = readBytes(in, 1)) != null) {
+						stream.write(bt);
+	    			}
+	    		}
+	    	}
+    	} catch (IOException e) {
+    		e.printStackTrace();
+    	}
+    	
+    	return stream.toByteArray();
     }
-
-    private void resetBytesRead() {
-        setBytesRead(0);
-    }
-
-    private void addBytesRead(int number) {
-        setBytesRead(getBytesRead() + number);
-    }
-
-    private int getBytesRead() {
-        return bytesRead;
-    }
-
-    private void setBytesRead(int charactersRead) {
-        this.bytesRead = charactersRead;
-    }
-    
-    private int bytesRead;
 }

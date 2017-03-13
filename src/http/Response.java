@@ -13,9 +13,9 @@ public class Response {
 
     private int statusCode;
     private HashMap<String, String> header;
-    private String body;
+    private byte[] body;
 
-    public Response(int statusCode, HashMap<String, String> header, String body) throws IOException {
+    public Response(int statusCode, HashMap<String, String> header, byte[] body) throws IOException {
         this.statusCode = statusCode;
         this.header = header;
         this.body = body;
@@ -25,7 +25,7 @@ public class Response {
         return statusCode;
     }
 
-    public String getBody() {
+    public byte[] getBody() {
         return body;
     }
 
@@ -53,7 +53,7 @@ public class Response {
         }
         // Write response body to file
         try {
-            Files.write(file.toPath(), body.getBytes());
+            Files.write(file.toPath(), getBody());
             System.out.println();
             System.out.println("HTML written to: " + file.getPath());
         } catch (IOException e) {
@@ -65,8 +65,8 @@ public class Response {
         System.out.println("Status code: " + this.statusCode);
         System.out.println();
         this.header.forEach((key, value) -> System.out.println(key + ": " + value));
-//        System.out.println();
-//        System.out.print(this.body);
+        System.out.println();
+        System.out.print(new String(getBody()));
     }
 
     public String getRedirectLocation() {

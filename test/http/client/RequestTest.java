@@ -27,7 +27,7 @@ public class RequestTest {
         int statusCode = response.getStatusCode();
         assertEquals(200, statusCode);
         // Expected to have a non-empty response body
-        assertFalse(response.getBody().isEmpty());
+        assertFalse(response.getBody().length == 0);
     }
 
 }
