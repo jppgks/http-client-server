@@ -77,6 +77,12 @@ public class Request {
         }
         this.body = body;
     }
+    
+    public Request(Method method, URL url, String body) {
+    	this.method = method;
+    	this.url = url;
+    	this.body = body;
+    }
 
     private Method getMethod() {
         return method;
@@ -148,12 +154,11 @@ public class Request {
 		byte[] data = new byte[number];
 		int bytesRead = 0;
 		try {
-			bytesRead = in.read(data);
+			while (bytesRead < number) {
+				bytesRead = in.read(data, bytesRead, number - bytesRead);
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
-		if (bytesRead != number) {
-			throw new IllegalArgumentException("Could not read the specified amount of bytes");
 		}
     	return data;
     }
@@ -221,6 +226,9 @@ public class Request {
 	    		while (true) {
 		    		// read line with chunk size
 		    		String line = readLine(in);
+		    		if (line.isEmpty()) {
+		    			line = readLine(in);
+		    		}
 		    		if (line.contains(";")) {
 						size = Integer.parseInt(line.substring(0, line.indexOf(";")), 16);
 					} else {
@@ -231,7 +239,9 @@ public class Request {
 		    			break;
 		    		}
 		    		// read chunk
-					stream.write(readBytes(in, size));
+		    		byte[] test = readBytes(in, size);
+		    		System.out.println(new String(test));
+					stream.write(test);
 	    		}
 	    	} else {
 	    		if (headers.containsKey("Content-Length")) {
