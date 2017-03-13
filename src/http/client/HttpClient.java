@@ -48,7 +48,7 @@ public class HttpClient {
         String file;
         if (address.contains("/")) {
         	host = address.substring(0, address.indexOf("/"));
-        	file = address.substring(address.indexOf("/") + 1);
+        	file = address.substring(address.indexOf("/"));
         } else {
         	host = address;
         	file = "/";

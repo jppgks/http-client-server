@@ -106,7 +106,6 @@ public class Request {
 
         DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
         BufferedInputStream inFromServer = new BufferedInputStream(clientSocket.getInputStream());
-        //BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
         // Write initial line and header
         outToServer.writeBytes(getInitialLineAndHeader(clientSocket.getPort()));
