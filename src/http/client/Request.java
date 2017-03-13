@@ -70,7 +70,7 @@ public class Request {
     public Request(Method method, String host, int port, String body) {
         this.method = method;
         try {
-            this.url = new URL("http", host, port, "/#q=chunked+transfer+encoding");
+            this.url = new URL("http", host, port, "/xjs/_/js/k=xjs.hp.en_US.qWyNDPmYk0M.O/m=sb_he,d/rt=j/d=1/t=zcms/rs=ACT90oEWohnPC7Zc5rBqUA6n0TENwFJ3gA");
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
@@ -121,8 +121,8 @@ public class Request {
         clientSocket.setSoTimeout(1000);
 
         DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
-        // BufferedInputStream streamInFromServer = new BufferedInputStream(clientSocket.getInputStream());
-        BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+        BufferedInputStream inFromServer = new BufferedInputStream(clientSocket.getInputStream());
+        //BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
         // Write initial line and header
         outToServer.writeBytes(getInitialLineAndHeader(clientSocket.getPort()));
@@ -149,6 +149,22 @@ public class Request {
 
         return response;
     }
+    
+    private String readLine(BufferedInputStream in) {
+    	String line = new String();
+    	while (! line.contains("\r\n")) {
+    		try {
+				int ch = in.read();
+				line += (char) ch;
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+    	}
+    	// remove line-end characters at the end
+    	line = line.substring(0, line.length() - 2);
+    	
+		return line;
+    }
 
     private String getInitialLineAndHeader(int port) {
         String initialLine = getMethod() + " " + url.getFile() + " HTTP/1.1" + "\r\n";
@@ -164,8 +180,8 @@ public class Request {
      * @return Response object with status code and body read from the BufferedReader
      * @throws IOException If an I/O error occurs.
      */
-    private Response generateResponse(BufferedReader inFromServer) throws IOException {
-        int statusCode = Integer.parseInt(inFromServer.readLine().split(" ")[1]);
+    private Response generateResponse(BufferedInputStream inFromServer) throws IOException {
+        int statusCode = Integer.parseInt(readLine(inFromServer).split(" ")[1]);
 
         HashMap<String, String> headerDict = readHeaders(inFromServer);
         
@@ -175,80 +191,68 @@ public class Request {
         return new Response(statusCode, headerDict, body);
     }
     
-    private HashMap<String,String> readHeaders(BufferedReader in) {
+    private HashMap<String,String> readHeaders(BufferedInputStream in) {
 		HashMap<String,String> headers = new HashMap<>();
 		
 		String header = null;
 		String value = null;
 		String line;
-		try {
-			while (((line = in.readLine()) != null)) {
-			    if (line.startsWith(" ") || line.startsWith("\t")) {
-			    	// lines beginning with spaces or tabs belong to the previous header line
-			    	line = line.trim();
-			    	value.concat(line);
+		while (((line = readLine(in)) != null)) {
+		    if (line.startsWith(" ") || line.startsWith("\t")) {
+		    	// lines beginning with spaces or tabs belong to the previous header line
+		    	line = line.trim();
+		    	value.concat(line);
+		    } else {
+		    	// put last header + value in map
+		    	if (header != null) {
+		    		headers.put(header, value);
+		    	}
+		    	
+		    	if (line.isEmpty()) {
+			        break;
 			    } else {
-			    	// put last header + value in map
-			    	if (header != null) {
-			    		headers.put(header, value);
-			    	}
-			    	
-			    	if (line.isEmpty()) {
-				        break;
-				    } else {
-				    	// read new header
-				    	header = line.substring(0, line.indexOf(":"));
-				    	value = line.substring(line.indexOf(":") + 1).trim();
-				    }
+			    	// read new header
+			    	header = line.substring(0, line.indexOf(":"));
+			    	value = line.substring(line.indexOf(":") + 1).trim();
 			    }
-			}
-		} catch (SocketTimeoutException ignored) {
-		} catch (IOException e) {
-			System.err.println("Something went wrong while reading the headers.");
-			e.printStackTrace();
+		    }
 		}
-		
     	return headers;
     }
     
-    private String readMessage(BufferedReader in, boolean chunkedTE) {
+    private String readMessage(BufferedInputStream in, boolean chunkedTE) {
     	StringBuilder sb = new StringBuilder();
         String line;
         int limit = 0;
-        try {
-            while (((line = in.readLine()) != null)) {
-            	if (chunkedTE) {
-            		if (this.getBytesRead() == limit) {
-            			// line with new limit
-            			System.err.println(line);
-            			if (line.contains(";")) {
-            				limit = Integer.parseInt(line.substring(0, line.indexOf(";")), 16);
-            			} else {
-            				limit = Integer.parseInt(line, 16);
-            			}
-            			
-            			if (limit == 0) {
-            				break;
-            			}
-            		} else {
-            			// just another regular line
-            			sb.append(line);
-            			addBytesRead(line.length());
-            			if (getBytesRead() < limit) {
-            				sb.append("\n");
-            				addBytesRead(1);
-            			}
-            		}
-            	} else {
-            		sb.append(line);
-                    sb.append("\n");
-            	}
-            }
-        } catch (SocketTimeoutException ignored) {
-        } catch (IOException e) {
-        	System.err.println("Something went wrong while reading the message.");
-            e.printStackTrace();
-        }
+        while (((line = readLine(in)) != null)) {
+			if (chunkedTE) {
+				if (this.getBytesRead() == limit) {
+					// line with new limit
+					System.err.println(line);
+					resetBytesRead();
+					if (line.contains(";")) {
+						limit = Integer.parseInt(line.substring(0, line.indexOf(";")), 16);
+					} else {
+						limit = Integer.parseInt(line, 16);
+					}
+					
+					if (limit == 0) {
+						break;
+					}
+				} else {
+					// just another regular line
+					sb.append(line);
+					addBytesRead(line.length());
+					if (getBytesRead() < limit) {
+						sb.append("\n");
+						addBytesRead(1);
+					}
+				}
+			} else {
+				sb.append(line);
+		        sb.append("\n");
+			}
+		}
         return sb.toString();
     }
 

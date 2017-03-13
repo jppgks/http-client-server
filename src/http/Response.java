@@ -65,8 +65,8 @@ public class Response {
         System.out.println("Status code: " + this.statusCode);
         System.out.println();
         this.header.forEach((key, value) -> System.out.println(key + ": " + value));
-        System.out.println();
-        System.out.print(this.body);
+//        System.out.println();
+//        System.out.print(this.body);
     }
 
     public String getRedirectLocation() {
