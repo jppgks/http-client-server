@@ -102,7 +102,7 @@ public class Request {
         Socket clientSocket = new Socket(url.getHost(), url.getPort() < 0 ? url.getDefaultPort() : url.getPort());
 
         // Time out on read when server is unresponsive for the given amount of time.
-        clientSocket.setSoTimeout(1000);
+        // clientSocket.setSoTimeout(1000);
 
         DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
         BufferedInputStream inFromServer = new BufferedInputStream(clientSocket.getInputStream());
@@ -154,7 +154,7 @@ public class Request {
 		int bytesRead = 0;
 		try {
 			while (bytesRead < number) {
-				bytesRead = in.read(data, bytesRead, number - bytesRead);
+				bytesRead += in.read(data, bytesRead, number - bytesRead);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
