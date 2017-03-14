@@ -4,9 +4,7 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.Socket;
-import java.net.URL;
 import java.util.HashMap;
 
 import http.Method;
@@ -29,32 +27,26 @@ public class Request {
      * Content of PUT or POST request
      */
     private String body;
-    private URL url;
+    private String host;
+    private int port;
+    private String file;
 
-    /**
-     * Construct request object from given url.
-     *
-     * @param method HTTP method
-     * @param url    URL (including protocol, host and file)
-     */
-    private Request(Method method, String url) {
-        this.method = method;
-        try {
-            this.url = new URL(url);
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
+
+    public Request(Method method, String host, int port) {
+    	this(method, host, port, "/");
     }
-
+    
+    
     /**
      * Construct request object with empty body.
      *
      * @param method HTTP method
      * @param host   Host
      * @param port   Port on host to connect at
+     * @param file	 Path to the requested file
      */
-    public Request(Method method, String host, int port) {
-        this(method, host, port, "");
+    public Request(Method method, String host, int port, String file) {
+        this(method, host, port, file, "");
     }
 
     /**
@@ -63,22 +55,40 @@ public class Request {
      * @param method HTTP method
      * @param host   Host
      * @param port   Port on host to connect at
+     * @param file	 Path to the requested file
      * @param body   Content to write to host
      */
-    public Request(Method method, String host, int port, String body) {
+    public Request(Method method, String host, int port, String file, String body) {
         this.method = method;
-        try {
-            this.url = new URL("http", host, port, "/");
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
+        this.host = host;
+        this.port = port;
+        this.file = file;
         this.body = body;
     }
     
-    public Request(Method method, URL url, String body) {
-    	this.method = method;
-    	this.url = url;
-    	this.body = body;
+    public Request(Method method, String address) {
+    	// remove protocol (if present)
+        if (address.startsWith("http://")) {
+        	address = address.substring("http://".length());
+        } else if (address.startsWith("https://")) {
+        	address = address.substring("https://".length());
+        }
+        
+        String host;
+        String file;
+        if (address.contains("/")) {
+        	host = address.substring(0, address.indexOf("/"));
+        	file = address.substring(address.indexOf("/"));
+        } else {
+        	host = address;
+        	file = "/";
+        }
+        
+        this.method = method;
+        this.host = host;
+        this.port = 80;
+        this.file = file;
+        this.body = "";
     }
 
     private Method getMethod() {
@@ -88,6 +98,18 @@ public class Request {
     private String getBody() {
         return body;
     }
+    
+    private String getHost() {
+    	return this.host;
+    }
+    
+    private int getPort() {
+    	return this.port;
+    }
+    
+    private String getFile() {
+    	return this.file;
+    }
 
     /**
      * Execute properly, based on the method of this request.
@@ -96,7 +118,7 @@ public class Request {
      */
     Response execute() throws IOException {
         // Port is -1 if not initialized, use default port in that case
-        Socket clientSocket = new Socket(url.getHost(), url.getPort() < 0 ? url.getDefaultPort() : url.getPort());
+        Socket clientSocket = new Socket(getHost(), getPort());
 
         // Time out on read when server is unresponsive for the given amount of time.
         // clientSocket.setSoTimeout(1000);
@@ -160,9 +182,9 @@ public class Request {
     }
 
     private String getInitialLineAndHeader(int port) {
-        String initialLine = getMethod() + " " + url.getFile() + " HTTP/1.1" + "\r\n";
+        String initialLine = getMethod() + " " + getFile() + " HTTP/1.1" + "\r\n";
         // Get port from socket, because if it isn't initialized in the URL object, that will return -1
-        String requestHeader = "Host: " + url.getHost() + "\r\n\r\n";
+        String requestHeader = "Host: " + getHost() + "\r\n\r\n";
         System.out.println(initialLine + requestHeader);
         return initialLine + requestHeader;
     }
@@ -181,7 +203,7 @@ public class Request {
         
         byte[] body = readMessage(inFromServer, headerDict);
 
-        return new Response(statusCode, headerDict, body, url.getFile());
+        return new Response(statusCode, headerDict, body, getFile());
     }
     
     private HashMap<String,String> readHeaders(BufferedInputStream in) {

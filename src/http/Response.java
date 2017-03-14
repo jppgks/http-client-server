@@ -88,6 +88,9 @@ public class Response {
      */
     private String getExtension() {
     	String contentType = getHeader().get("Content-Type");
+    	if (contentType.contains(";")) {
+    		contentType = contentType.substring(0, contentType.indexOf(";"));
+    	}
     	switch (contentType) {
     	case "text/plain": return "txt";
     	case "application/javascript": return "js";

@@ -56,13 +56,6 @@ public class HttpClient {
         	file = "/";
         }
         int port = Integer.parseInt(args[2]);
-        URL url = null;
-		try {
-			url = new URL("http", host, port, file);
-		} catch (MalformedURLException e1) {
-			System.err.println("URL not formed properly.");
-			e1.printStackTrace();
-		}
         String body = "";
         
         if (method == Method.POST || method == Method.PUT) {
@@ -70,6 +63,6 @@ public class HttpClient {
         	body = System.console().readLine();
         }
         
-        return new Request(method, url, body);
+        return new Request(method, host, port, file, body);
     }
 }
