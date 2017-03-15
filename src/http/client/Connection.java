@@ -54,7 +54,7 @@ public class Connection {
             // Generate new request
             Request newRequest = new Request(request.getMethod(), response.getRedirectLocation());
             // Execute new request and make sure to return that response
-            response = newRequest.execute();
+            response = this.execute(newRequest);
         }
 		
 		return response;
