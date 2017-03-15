@@ -13,13 +13,15 @@ public class HttpClient {
     public static void main(String args[]) {
         // Parse arguments [HTTPCommand, URI, Port] into request
         Request request = generateRequestFromArgs(args);
+        Connection connection = new Connection(request.getHost(), request.getPort());
 
         try {
             // Execute request
-            Response response = request.execute();
+            Response response = connection.execute(request);
             // Display response
             response.save("output/" + new Date().getTime() + "/");
             response.print();
+            connection.close();
         } catch (IOException e) {
             e.printStackTrace();
         }

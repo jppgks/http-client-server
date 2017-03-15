@@ -91,23 +91,23 @@ public class Request {
         this.body = "";
     }
 
-    private Method getMethod() {
+    Method getMethod() {
         return method;
     }
 
-    private String getBody() {
+    String getBody() {
         return body;
     }
     
-    private String getHost() {
+    String getHost() {
     	return this.host;
     }
     
-    private int getPort() {
+    int getPort() {
     	return this.port;
     }
     
-    private String getFile() {
+    String getFile() {
     	return this.file;
     }
 
@@ -127,7 +127,7 @@ public class Request {
         BufferedInputStream inFromServer = new BufferedInputStream(clientSocket.getInputStream());
 
         // Write initial line and header
-        outToServer.writeBytes(getInitialLineAndHeader(clientSocket.getPort()));
+        outToServer.writeBytes(getInitialLineAndHeader());
 
         // Write body
         if (this.method == Method.PUT || this.method == Method.POST) {
@@ -181,9 +181,8 @@ public class Request {
     	return data;
     }
 
-    private String getInitialLineAndHeader(int port) {
+    String getInitialLineAndHeader() {
         String initialLine = getMethod() + " " + getFile() + " HTTP/1.1" + "\r\n";
-        // Get port from socket, because if it isn't initialized in the URL object, that will return -1
         String requestHeader = "Host: " + getHost() + "\r\n\r\n";
         System.out.println(initialLine + requestHeader);
         return initialLine + requestHeader;
