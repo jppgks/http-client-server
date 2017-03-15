@@ -1,7 +1,7 @@
 package http.client;
 
 import http.Method;
-import http.Response;
+
 import org.junit.Before;
 
 import static org.junit.Assert.assertEquals;
@@ -23,7 +23,8 @@ public class RequestTest {
 
     @org.junit.Test
     public void executeSocketsTest() throws Exception {
-        Response response = request.execute();
+    	Connection connection = new Connection(request.getHost(), request.getPort());
+        Response response = connection.execute(request);
         int statusCode = response.getStatusCode();
         assertEquals(200, statusCode);
         // Expected to have a non-empty response body

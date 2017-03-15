@@ -9,7 +9,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 import http.Method;
-import http.Response;
 
 public class Connection {
 	public Connection(String host, int port) {
@@ -94,6 +93,9 @@ public class Connection {
 		int newRead;
 		try {
 			while (bytesRead < number) {
+				if (in.available() > 0) {
+					
+				}
 				newRead = in.read(data, bytesRead, number - bytesRead);
 				if (newRead == -1) {
 					if (bytesRead == 0) {
@@ -165,6 +167,8 @@ public class Connection {
 		    		// read chunk
 					stream.write(readBytes(in, size));
 	    		}
+	    		// make sure that incoming buffer doesn't contain any left-over data
+	    		readLine(in);
 	    	} else {
 	    		if (headers.containsKey("Content-Length")) {
 	    			size = Integer.parseInt(headers.get("Content-Length"));
@@ -179,13 +183,7 @@ public class Connection {
 	    			}
 	    		}
 	    	}
-	    	// make sure that incoming buffer doesn't contain any left-over data
-	    	byte[] bt;
-	    	do {
-	    		bt = readBytes(in, 1);
-	    	} while (bt != null);
-	    	
-	    	
+	    		
     	} catch (IOException e) {
     		e.printStackTrace();
     	}

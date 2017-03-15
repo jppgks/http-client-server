@@ -1,13 +1,10 @@
 package http.client;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.Date;
 
 import http.Method;
-import http.Response;
 
 public class HttpClient {
     public static void main(String args[]) {
@@ -21,6 +18,7 @@ public class HttpClient {
             // Display response
             response.save("output/" + new Date().getTime() + "/");
             response.print();
+            connection.execute(request).print();
             connection.close();
         } catch (IOException e) {
             e.printStackTrace();
