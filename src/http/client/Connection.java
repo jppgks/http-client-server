@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.HashMap;
 
 import http.Method;
@@ -90,9 +91,19 @@ public class Connection {
     private byte[] readBytes(BufferedInputStream in, int number) {
 		byte[] data = new byte[number];
 		int bytesRead = 0;
+		int newRead;
 		try {
 			while (bytesRead < number) {
-				bytesRead += in.read(data, bytesRead, number - bytesRead);
+				newRead = in.read(data, bytesRead, number - bytesRead);
+				if (newRead == -1) {
+					if (bytesRead == 0) {
+						return null;
+					} else {
+						return Arrays.copyOf(data, bytesRead);
+					}
+				} else {
+					bytesRead += newRead;
+				}
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -162,12 +173,19 @@ public class Connection {
 	    		} else {
 	    			// read to the end (until the connection is closed)
 	    			// read all bytes one by one
-	    			byte[] bt = new byte[1];
+	    			byte[] bt;
 	    			while ((bt = readBytes(in, 1)) != null) {
-						stream.write(bt);
+	    				stream.write(bt);
 	    			}
 	    		}
 	    	}
+	    	// make sure that incoming buffer doesn't contain any left-over data
+	    	byte[] bt;
+	    	do {
+	    		bt = readBytes(in, 1);
+	    	} while (bt != null);
+	    	
+	    	
     	} catch (IOException e) {
     		e.printStackTrace();
     	}
