@@ -18,7 +18,6 @@ public class HttpClient {
             // Display response
             response.save("output/" + new Date().getTime() + "/");
             response.print();
-            connection.execute(request).print();
             connection.close();
         } catch (IOException e) {
             e.printStackTrace();

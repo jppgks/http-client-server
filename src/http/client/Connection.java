@@ -46,6 +46,11 @@ public class Connection {
 		int statusCode = Integer.parseInt(readLine(inFromServer).split(" ")[1]);
 		HashMap<String, String> headers = readHeaders(inFromServer);
 		byte[] body = readMessage(inFromServer, headers);
+		if (headers.containsKey("Transfer-Encoding") && "chunked".equals(headers.get("Transfer-Encoding"))) {
+			// read (optional) footers
+			HashMap<String, String> footers = readHeaders(inFromServer);
+			headers.putAll(footers);
+		}
 		
 		Response response = new Response(statusCode, headers, body, request.getFile());
 		
@@ -119,7 +124,9 @@ public class Connection {
 		String header = null;
 		String value = null;
 		String line;
-		while (((line = readLine(in)) != null)) {
+		boolean stop = false;
+		while (! stop) {
+			line = readLine(in);
 		    if (line.startsWith(" ") || line.startsWith("\t")) {
 		    	// lines beginning with spaces or tabs belong to the previous header line
 		    	line = line.trim();
@@ -131,7 +138,7 @@ public class Connection {
 		    	}
 		    	
 		    	if (line.isEmpty()) {
-			        break;
+			        stop = true;
 			    } else {
 			    	// read new header
 			    	header = line.substring(0, line.indexOf(":"));
@@ -149,7 +156,8 @@ public class Connection {
     	try {
 	    	if (chunkedTE) {
 	    		// Read chunked message
-	    		while (true) {
+	    		boolean stop = false;
+	    		while (! stop) {
 		    		// read line with chunk size
 		    		String line = readLine(in);
 		    		if (line.isEmpty()) {
@@ -162,13 +170,11 @@ public class Connection {
 					}
 		    		
 		    		if (size == 0) {
-		    			break;
+		    			stop = true;
 		    		}
 		    		// read chunk
 					stream.write(readBytes(in, size));
 	    		}
-	    		// make sure that incoming buffer doesn't contain any left-over data
-	    		readLine(in);
 	    	} else {
 	    		if (headers.containsKey("Content-Length")) {
 	    			size = Integer.parseInt(headers.get("Content-Length"));
