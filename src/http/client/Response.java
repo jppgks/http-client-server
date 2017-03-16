@@ -76,9 +76,9 @@ public class Response {
      * Retrieves other objects on the page and creates a Request for them
      */
     public HashSet<Request> handle() {
+    	HashSet<Request> requests = new HashSet<>();
     	if (body != null && getHeader().get("Content-Type").contains("text/html")) {
     		// Only retrieve other objects embedded in an HTML file
-    		HashSet<Request> requests = new HashSet<>();
     		//String pattern = "<\\w+ [^<>]* src=\"(.*)\" [^<>]*>";
     		String pattern = "<.*? src=\"(.*?)\".*?>";
     		Pattern r = Pattern.compile(pattern);
@@ -117,10 +117,8 @@ public class Response {
     		        requests.add(new Request(Method.GET, host, 80, file));
     			}
     		}
-    		return requests;
-    	} else {
-    		return null;
     	}
+    	return requests;
     }
     
     public void save(String path) {

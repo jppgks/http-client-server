@@ -1,12 +1,15 @@
 package http.client;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Scanner;
 
 import http.Method;
 
@@ -97,7 +100,10 @@ public class HttpClient {
         
         if (method == Method.POST || method == Method.PUT) {
         	// read from interactive command prompt
-        	body = System.console().readLine();
+        	System.out.print("Enter the body of your request: ");
+        	Scanner scan = new Scanner(System.in);
+        	body = scan.next();
+        	scan.close();
         }
         
         return new Request(method, host, port, file, body);
