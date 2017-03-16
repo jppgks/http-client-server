@@ -3,7 +3,6 @@ package http.client;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Random;
@@ -101,6 +100,8 @@ public class Response {
     		        	path = path.substring("http://".length());
     		        } else if (path.startsWith("https://")) {
     		        	path = path.substring("https://".length());
+    		        } else if (path.startsWith("//")) {
+    		        	path = path.substring("//".length());
     		        }
     		        
     		        String host;
@@ -147,7 +148,7 @@ public class Response {
     
     
     private boolean isRelativePath(String path) {
-    	if (path.startsWith("http://") || path.startsWith("https://")) {
+    	if (path.startsWith("http://") || path.startsWith("https://") || path.startsWith("//")) {
     		return false;
     	} else {
     		return true;
