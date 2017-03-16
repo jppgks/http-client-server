@@ -168,6 +168,7 @@ public class Response {
     	case "text/plain": return "txt";
     	case "application/javascript": return "js";
     	case "image/x-icon": return "ico";
+    	case "text/javascript": return "txt";
     	default: return contentType.substring(contentType.indexOf("/") + 1);
     	}
     }
