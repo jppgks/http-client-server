@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -75,10 +76,10 @@ public class Response {
      * 
      * Retrieves other objects on the page and creates a Request for them
      */
-    public ArrayList<Request> handle() {
+    public HashSet<Request> handle() {
     	if (body != null && getHeader().get("Content-Type").contains("text/html")) {
     		// Only retrieve other objects embedded in an HTML file
-    		ArrayList<Request> requests = new ArrayList<>();
+    		HashSet<Request> requests = new HashSet<>();
     		//String pattern = "<\\w+ [^<>]* src=\"(.*)\" [^<>]*>";
     		String pattern = "<.*? src=\"(.*?)\".*?>";
     		Pattern r = Pattern.compile(pattern);
@@ -144,9 +145,9 @@ public class Response {
     
     private boolean isRelativePath(String path) {
     	if (path.startsWith("http://") || path.startsWith("https://")) {
-    		return true;
-    	} else {
     		return false;
+    	} else {
+    		return true;
     	}
     }
     

@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 
 import http.Method;
 
@@ -17,10 +20,43 @@ public class HttpClient {
             // Execute request
             Response response = connection.execute(request);
             // Display response
-            response.save("output/" + new Date().getTime() + "/");
+            String path = "output/" + new Date().getTime() + "/";
+            response.save(path);
             response.print();
-            ArrayList<Request> requests = response.handle();
-            connection.close();
+            
+            HashSet<Request> requests = response.handle();
+            // order requests by host
+            HashMap<String, ArrayList<Request>> requestsByHost = new HashMap<>();
+            for (Request r : requests) {
+            	if (requestsByHost.containsKey(r.getHost() + ":" + r.getPort())) {
+            		requestsByHost.get(r.getHost() + ":" + r.getPort()).add(r);
+            	} else {
+            		ArrayList<Request> reqs = new ArrayList<>();
+            		reqs.add(r);
+            		requestsByHost.put(r.getHost() + ":" + r.getPort(), reqs);
+            	}
+            }
+            
+            if (requestsByHost.containsKey(connection.getHost() + ":" + connection.getPort())) {
+            	ArrayList<Request> requestsForConnection = requestsByHost.get(connection.getHost() + ":" + connection.getPort());
+            	for (Request r : requestsForConnection) {
+            		connection.execute(r).save(path);
+            	}
+            	connection.close();
+            	requestsByHost.remove(connection.getHost() + ":" + connection.getPort());
+            }
+            
+            for (Map.Entry<String, ArrayList<Request>> entry : requestsByHost.entrySet()) {
+            	ArrayList<Request> requestsForConnection = entry.getValue();
+            	connection = new Connection(requestsForConnection.get(0).getHost(), requestsForConnection.get(0).getPort());
+            	for (Request r : requestsForConnection) {
+            		connection.execute(r).save(path);
+            	}
+            	connection.close();
+            }
+            
+            
+            
         } catch (IOException e) {
             e.printStackTrace();
         }
