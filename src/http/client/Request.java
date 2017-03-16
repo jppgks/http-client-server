@@ -101,8 +101,14 @@ public class Request {
 
     String getInitialLineAndHeader() {
         String initialLine = getMethod() + " " + getFile() + " HTTP/1.1" + "\r\n";
-        String requestHeader = "Host: " + getHost() + "\r\n\r\n";
-        System.out.println(initialLine + requestHeader);
-        return initialLine + requestHeader;
+        String headerHost = "Host: " + getHost() + "\r\n";
+        if (getMethod() == Method.POST || getMethod() == Method.PUT) {
+        	String additionalHeaders = "Content-Type: text/plain" + "\r\n" + "Content-Length: " + getBody().length() + "\r\n";
+        	System.out.println(initialLine + headerHost + additionalHeaders);
+        	return initialLine + headerHost + additionalHeaders + "\r\n";
+        } else {
+        	System.out.println(initialLine + headerHost);
+        	return initialLine + headerHost + "\r\n";
+        }
     }
 }

@@ -1,6 +1,7 @@
 package http.client;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 
@@ -18,6 +19,7 @@ public class HttpClient {
             // Display response
             response.save("output/" + new Date().getTime() + "/");
             response.print();
+            ArrayList<Request> requests = response.handle();
             connection.close();
         } catch (IOException e) {
             e.printStackTrace();

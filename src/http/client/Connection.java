@@ -45,14 +45,18 @@ public class Connection {
 		// Generate response
 		int statusCode = Integer.parseInt(readLine(inFromServer).split(" ")[1]);
 		HashMap<String, String> headers = readHeaders(inFromServer);
-		byte[] body = readMessage(inFromServer, headers);
-		if (headers.containsKey("Transfer-Encoding") && "chunked".equals(headers.get("Transfer-Encoding"))) {
-			// read (optional) footers
-			HashMap<String, String> footers = readHeaders(inFromServer);
-			headers.putAll(footers);
+		Response response;
+		if (request.getMethod() != Method.HEAD) {
+			byte[] body = readMessage(inFromServer, headers);
+			if (headers.containsKey("Transfer-Encoding") && "chunked".equals(headers.get("Transfer-Encoding"))) {
+				// read (optional) footers
+				HashMap<String, String> footers = readHeaders(inFromServer);
+				headers.putAll(footers);
+			}
+			response = new Response(statusCode, headers, body,request.getHost(), request.getFile());
+		} else {
+			response = new Response(statusCode, headers, request.getHost(), request.getFile());
 		}
-		
-		Response response = new Response(statusCode, headers, body, request.getFile());
 		
 		// Redirect if needed
 		if (String.valueOf(response.getStatusCode()).charAt(0) == '3') {

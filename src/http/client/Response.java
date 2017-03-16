@@ -3,8 +3,11 @@ package http.client;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Stores relevant response attributes.
@@ -15,19 +18,22 @@ public class Response {
     private HashMap<String, String> header;
     private byte[] body;
     private String name;
-
-    public Response(int statusCode, HashMap<String, String> header, byte[] body) throws IOException {
-        this.statusCode = statusCode;
-        this.header = header;
-        this.body = body;
-    }
+    private String host;
     
-    public Response(int statusCode, HashMap<String, String> header, byte[] body, String name) throws IOException {
+    public Response(int statusCode, HashMap<String, String> header, byte[] body, String host, String name) throws IOException {
         this.statusCode = statusCode;
         this.header = header;
         this.body = body;
         setName(name);
+        this.host = host;
     } 
+    
+    public Response(int statusCode, HashMap<String, String> header, String host, String name) {
+    	this.statusCode = statusCode;
+        this.header = header;
+        setName(name);
+        this.host = host;
+    }
     
     private HashMap<String, String> getHeader() {
     	return this.header;
@@ -51,34 +57,58 @@ public class Response {
     		this.name = "index";
     	}
     }
+    
+    private String getHost() {
+    	return this.host;
+    }
 
     /**
      * 
-     * Retrieves and stores other objects on the page
+     * Retrieves other objects on the page and creates a Request for them
      */
-    public void handle() {
-       
+    public ArrayList<Request> handle() {
+    	if (body != null) {
+	    	if (getHeader().get("Content-Type").contains("text/html")) {
+	    		// Only retrieve other objects embedded in an HTML file
+	    		//String pattern = "<\\w+ [^<>]* src=\"(.*)\" [^<>]*>";
+	    		String pattern = "<.*? src=\"(.*?)\".*?>";
+	    		Pattern r = Pattern.compile(pattern);
+	    		Matcher m = r.matcher(new String(getBody()));
+	    		
+	    		while (m.find()) {
+	    			System.out.println(m.group(1));
+	    		}
+	    		
+	    		return null;
+	    	} else {
+	    		return null;
+	    	}
+    	} else {
+    		return null;
+    	}
     }
     
     public void save(String path) {
-    	File file = new File(path + getName() + "." + getExtension());
-    	while (file.exists()) {
-    		file = new File(path + getName() + Integer.toString(new Random().nextInt()) + "." + getExtension());
+    	if (body != null) {
+	    	File file = new File(path + getName() + "." + getExtension());
+	    	while (file.exists()) {
+	    		file = new File(path + getName() + Integer.toString(new Random().nextInt()) + "." + getExtension());
+	    	}
+	    	
+	    	try {
+	            file.getParentFile().mkdir();
+	            file.createNewFile();
+	        } catch (IOException e) {
+	            e.printStackTrace();
+	        }
+	        // Write response body to file
+	        try {
+	            Files.write(file.toPath(), getBody());
+	            System.out.println("HTML written to: " + file.getPath());
+	        } catch (IOException e) {
+	            e.printStackTrace();
+	        }
     	}
-    	
-    	try {
-            file.getParentFile().mkdir();
-            file.createNewFile();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        // Write response body to file
-        try {
-            Files.write(file.toPath(), getBody());
-            System.out.println("HTML written to: " + file.getPath());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
     
     
