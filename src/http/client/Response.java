@@ -91,6 +91,9 @@ public class Response {
     			System.out.println(path);
     			if (isRelativePath(path)) {
     				// request on the same host
+    				if (! path.startsWith("/")) {
+    					path = "/" + path;
+    				}
     				requests.add(new Request(Method.GET, getHost(), getPort(), path));
     			} else {
     				// remove protocol (if present)
