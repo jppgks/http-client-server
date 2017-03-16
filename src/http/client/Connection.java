@@ -53,9 +53,9 @@ public class Connection {
 				HashMap<String, String> footers = readHeaders(inFromServer);
 				headers.putAll(footers);
 			}
-			response = new Response(statusCode, headers, body,request.getHost(), request.getFile());
+			response = new Response(statusCode, headers, body, request.getHost(), request.getPort(), request.getFile());
 		} else {
-			response = new Response(statusCode, headers, request.getHost(), request.getFile());
+			response = new Response(statusCode, headers, request.getHost(), request.getPort(), request.getFile());
 		}
 		
 		// Redirect if needed
