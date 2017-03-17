@@ -101,8 +101,9 @@ public class ServerThread implements Runnable {
 	private Response handle(Request request) throws FileNotFoundException, InternalServerException {
 		String httpVersion = request.getHttpVersion();
 		byte[] message;
-		Response response;
+		Response response = null;
 		int messageLength;
+		HashMap<String,String> headers = new HashMap<>();
 		
 		if (request.getMethod() == Method.GET || request.getMethod() == Method.HEAD) {
 			// read file
@@ -110,7 +111,10 @@ public class ServerThread implements Runnable {
 			if (Files.exists(path) && Files.isRegularFile(path)) {
 				try {
 					messageLength = (int) Files.size(path);
-					if (request.getMethod() == Method.GET) {
+					headers.put("Content-Length", Integer.toString(messageLength));
+					if (request.getMethod() == Method.HEAD) {
+						response = new Response(200, headers, httpVersion);
+					} else {
 						message = Files.readAllBytes(path);
 					}
 				} catch (IOException e) {
@@ -123,8 +127,8 @@ public class ServerThread implements Runnable {
 			// save message
 		}
 		// success
-		//response = new Response(200, header, body, httpVersion);
-		return null;
+		// response = new Response(200, header, body, httpVersion);
+		return response;
 	}
 	
 	private HashMap<String,String> readHeaders() throws SocketTimeoutException {
