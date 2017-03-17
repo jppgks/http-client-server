@@ -52,7 +52,11 @@ public class Request {
 
 	@Override
 	public String toString() {
-		return this.getMethod() + " " + this.getFile() + " " + this.getHttpVersion() + "\n" + this.getHeaders()
-				+ "\n\n" + new String(this.getMessage());
+		if (getMethod() == Method.GET || getMethod() == Method.HEAD) {
+			return this.getMethod() + " " + this.getFile() + " " + this.getHttpVersion() + "\n" + this.getHeaders();
+		} else {
+			return this.getMethod() + " " + this.getFile() + " " + this.getHttpVersion() + "\n" + this.getHeaders()
+			+ "\n\n" + new String(this.getMessage());
+		}
 	}
 }

@@ -9,6 +9,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -30,14 +31,19 @@ public class ServerThread implements Runnable {
 	public void run() {
 		try {
 			socket.setSoTimeout(10000);
+			Request request = null;
 			while (! closed) {
-				Request request = readRequest();
+				try {
+					request = readRequest();
+				} catch (SocketTimeoutException e) {
+					closed = true;
+				}
 				if (request == null) {
 					// timeout: break the while loop
 					closed = true;
 				} else {
 					// handle request
-					request.toString();
+					System.out.println(request.toString());
 					if ((request.getHeaders().containsKey("Connection") && request.getHeaders().get("Connection").equals("Close")) || request.getHttpVersion() == "HTTP/1.0") {
 						// set closed to true to break the while loop
 						closed = true;
@@ -55,7 +61,7 @@ public class ServerThread implements Runnable {
 		
 	}
 
-	private Request readRequest() throws BadRequestException {
+	private Request readRequest() throws BadRequestException, SocketTimeoutException {
 		Request request = null;
 		
 		String firstLine = readLine();
@@ -86,7 +92,7 @@ public class ServerThread implements Runnable {
 		return request;
 	}
 	
-	private HashMap<String,String> readHeaders() {
+	private HashMap<String,String> readHeaders() throws SocketTimeoutException {
 		HashMap<String,String> headers = new HashMap<>();
 		
 		String header = null;
@@ -165,12 +171,14 @@ public class ServerThread implements Runnable {
     	return stream.toByteArray();
     }
 	
-	private String readLine() {
+	private String readLine() throws SocketTimeoutException {
     	String line = new String();
     	while (! line.contains("\r\n")) {
     		try {
 				int ch = inFromClient.read();
 				line += (char) ch;
+    		} catch (SocketTimeoutException e) {
+    			throw e;
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -181,7 +189,7 @@ public class ServerThread implements Runnable {
 		return line;
     }
     
-    private byte[] readBytes(int number) {
+    private byte[] readBytes(int number) throws SocketTimeoutException {
 		byte[] data = new byte[number];
 		int bytesRead = 0;
 		int newRead;
@@ -201,6 +209,8 @@ public class ServerThread implements Runnable {
 					bytesRead += newRead;
 				}
 			}
+		} catch (SocketTimeoutException e) {
+			throw e;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
