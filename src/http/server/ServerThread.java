@@ -1,5 +1,8 @@
 package http.server;
 
+import http.Method;
+import http.server.exceptions.BadRequestException;
+
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -8,9 +11,6 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.Arrays;
 import java.util.HashMap;
-
-import http.Method;
-import http.server.exceptions.BadRequestException;
 
 public class ServerThread implements Runnable {
 
@@ -59,7 +59,7 @@ public class ServerThread implements Runnable {
 		Request request = null;
 		
 		String firstLine = readLine();
-		if (! Arrays.stream(Method.values()).anyMatch(e -> e.getName().equals(firstLine.split(" ")[0]))) {
+		if (Arrays.stream(Method.values()).noneMatch(e -> e.getName().equals(firstLine.split(" ")[0]))) {
 			// HTTP Method not supported
 			throw new BadRequestException();
 		}

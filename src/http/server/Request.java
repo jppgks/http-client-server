@@ -1,9 +1,9 @@
 package http.server;
 
-import java.util.HashMap;
-
 import http.Method;
 import http.server.exceptions.BadRequestException;
+
+import java.util.HashMap;
 
 public class Request {
 	private Method method;
@@ -49,6 +49,10 @@ public class Request {
 	public byte[] getMessage() {
 		return message;
 	}
-	
-	
+
+	@Override
+	public String toString() {
+		return this.getMethod() + " " + this.getFile() + " " + this.getHttpVersion() + "\n" + this.getHeaders()
+				+ "\n\n" + new String(this.getMessage());
+	}
 }
