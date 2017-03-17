@@ -10,8 +10,7 @@ public class HttpServer {
 		ServerSocket serverSocket = new ServerSocket(8080);
 		while (true) {
 			Socket clientSocket = serverSocket.accept();
-			ServerThread h = new ServerThread(clientSocket);
-			Thread thread = new Thread(h);
+			Thread thread = new Thread(new ServerThread(clientSocket));
 			thread.start();
 		}
 	}
