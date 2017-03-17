@@ -10,7 +10,12 @@ import java.net.SocketTimeoutException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 
 import http.Method;
@@ -51,6 +56,15 @@ public class ServerThread implements Runnable {
 				} else {
 					// handle request
 					System.out.println(request.toString());
+					try {
+						Response response = handle(request);
+					} catch (FileNotFoundException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (InternalServerException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 					if ((request.getHeaders().containsKey("Connection") && request.getHeaders().get("Connection").equals("Close")) || request.getHttpVersion() == "HTTP/1.0") {
 						// set closed to true to break the while loop
 						closed = true;
@@ -104,18 +118,24 @@ public class ServerThread implements Runnable {
 		Response response = null;
 		int messageLength;
 		HashMap<String,String> headers = new HashMap<>();
+		String date = java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME.format(ZonedDateTime.now(ZoneId.of("GMT")));
+		System.out.println(date);
+		
 		
 		if (request.getMethod() == Method.GET || request.getMethod() == Method.HEAD) {
+			// TODO: check if page is modified since last time (304)
 			// read file
 			Path path = Paths.get(HttpServer.path + request.getFile());
 			if (Files.exists(path) && Files.isRegularFile(path)) {
 				try {
 					messageLength = (int) Files.size(path);
 					headers.put("Content-Length", Integer.toString(messageLength));
+					headers.put("Content-Type", Files.probeContentType(path));
 					if (request.getMethod() == Method.HEAD) {
 						response = new Response(200, headers, httpVersion);
 					} else {
 						message = Files.readAllBytes(path);
+						response = new Response(200, headers, message, httpVersion);
 					}
 				} catch (IOException e) {
 					throw new InternalServerException();
@@ -124,6 +144,7 @@ public class ServerThread implements Runnable {
 				throw new FileNotFoundException();
 			}
 		} else {
+			// put or post
 			// save message
 		}
 		// success
