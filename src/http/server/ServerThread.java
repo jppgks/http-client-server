@@ -3,9 +3,13 @@ package http.server;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -89,6 +93,25 @@ public class ServerThread implements Runnable {
 			request = new Request(method, file, httpVersion, headers);
 		}
 		return request;
+	}
+	
+	
+	private Response handle(Request request) {
+		String httpVersion = request.getHttpVersion();
+		byte[] message;
+		if (request.getMethod() == Method.GET || request.getMethod() == Method.HEAD) {
+			// read file
+			Path path = Paths.get(HttpServer.path + request.getFile());
+			try {
+				message = Files.readAllBytes(path);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		} else {
+			// save message
+		}
+		return null;
 	}
 	
 	private HashMap<String,String> readHeaders() throws SocketTimeoutException {

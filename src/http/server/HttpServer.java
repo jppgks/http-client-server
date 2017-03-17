@@ -14,5 +14,7 @@ public class HttpServer {
 			thread.start();
 		}
 	}
+	
+	static String path = "serverContent/";
 
 }
