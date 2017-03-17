@@ -14,34 +14,53 @@ public class Response {
     private String httpVersion;
     private String reasonPhrase;
 
-    public Response(int statusCode, HashMap<String, String> header, byte[] body, String httpVersion, String reasonPhrase) throws IOException {
+    public Response(int statusCode, HashMap<String, String> header, byte[] body, String httpVersion) throws IOException {
         this.statusCode = statusCode;
         this.header = header;
         this.body = body;
         this.httpVersion = httpVersion;
         this.reasonPhrase = reasonPhrase;
     }
-    public Response(int statusCode, HashMap<String, String> header, String httpVersion, String reasonPhrase) {
+    public Response(int statusCode, HashMap<String, String> header, String httpVersion) {
         this.statusCode = statusCode;
         this.header = header;
         this.httpVersion = httpVersion;
         this.reasonPhrase = reasonPhrase;
     }
 
-    public String getHttpVersion() {
+    private String getHttpVersion() {
         return httpVersion;
     }
 
-    public String getReasonPhrase() {
-        return reasonPhrase;
+    private String getReasonPhrase() {
+        switch (statusCode) {
+            case 200:
+                return "OK";
+            case 304:
+                return "Not Modified";
+            case 400:
+                return "Bad Request";
+            case 402:
+                return "Payment Required";
+            case 404:
+                return "Not Found";
+            case 500:
+                return "Server Error";
+            default:
+                return "";
+        }
     }
 
     private HashMap<String, String> getHeader() {
         return this.header;
     }
 
-    public int getStatusCode() {
+    private int getStatusCode() {
         return statusCode;
+    }
+
+    public String getStatusLine() {
+        return getHttpVersion() + " " + getStatusCode() + " " + getReasonPhrase();
     }
 
     public byte[] getBody() {
