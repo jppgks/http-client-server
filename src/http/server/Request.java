@@ -29,4 +29,26 @@ public class Request {
 		this.headers = headers;
 		this.message = message;
 	}
+
+	public Method getMethod() {
+		return method;
+	}
+
+	public String getFile() {
+		return file;
+	}
+
+	public String getHttpVersion() {
+		return httpVersion;
+	}
+
+	public HashMap<String, String> getHeaders() {
+		return headers;
+	}
+
+	public byte[] getMessage() {
+		return message;
+	}
+	
+	
 }

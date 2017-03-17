@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -16,6 +17,7 @@ public class ServerThread implements Runnable {
 	private Socket socket;
 	private DataOutputStream outToClient;
 	private BufferedInputStream inFromClient;
+	private boolean closed;
 	
 	public ServerThread(Socket socket) throws IOException {
 		this.socket = socket;
@@ -27,9 +29,26 @@ public class ServerThread implements Runnable {
 	@Override
 	public void run() {
 		try {
-			Request request = readRequest();
+			socket.setSoTimeout(10000);
+			while (! closed) {
+				Request request = readRequest();
+				if (request == null) {
+					// timeout: break the while loop
+					closed = true;
+				}
+				// handle request
+				
+				if ((request.getHeaders().containsKey("Connection") && request.getHeaders().get("Connection").equals("Close")) || request.getHttpVersion() == "HTTP/1.0") {
+					// set closed to true to break the while loop
+					closed = true;
+				}
+			}
+			// close connection
+			socket.close();
 		} catch (BadRequestException e) {
 			// send bad request error 400
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 		
 	}
