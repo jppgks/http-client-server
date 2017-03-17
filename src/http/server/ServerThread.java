@@ -15,6 +15,8 @@ import java.util.HashMap;
 
 import http.Method;
 import http.server.exceptions.BadRequestException;
+import http.server.exceptions.FileNotFoundException;
+import http.server.exceptions.InternalServerException;
 
 public class ServerThread implements Runnable {
 
@@ -40,6 +42,8 @@ public class ServerThread implements Runnable {
 					request = readRequest();
 				} catch (SocketTimeoutException e) {
 					closed = true;
+				} catch (BadRequestException e) {
+					// send bad request error 400
 				}
 				if (request == null) {
 					// timeout: break the while loop
@@ -56,8 +60,6 @@ public class ServerThread implements Runnable {
 			// close connection
 			socket.close();
 			System.out.println("Connection closed");
-		} catch (BadRequestException e) {
-			// send bad request error 400
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -96,21 +98,32 @@ public class ServerThread implements Runnable {
 	}
 	
 	
-	private Response handle(Request request) {
+	private Response handle(Request request) throws FileNotFoundException, InternalServerException {
 		String httpVersion = request.getHttpVersion();
 		byte[] message;
+		Response response;
+		int messageLength;
+		
 		if (request.getMethod() == Method.GET || request.getMethod() == Method.HEAD) {
 			// read file
 			Path path = Paths.get(HttpServer.path + request.getFile());
-			try {
-				message = Files.readAllBytes(path);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			if (Files.exists(path) && Files.isRegularFile(path)) {
+				try {
+					messageLength = (int) Files.size(path);
+					if (request.getMethod() == Method.GET) {
+						message = Files.readAllBytes(path);
+					}
+				} catch (IOException e) {
+					throw new InternalServerException();
+				}
+			} else {
+				throw new FileNotFoundException();
 			}
 		} else {
 			// save message
 		}
+		// success
+		//response = new Response(200, header, body, httpVersion);
 		return null;
 	}
 	

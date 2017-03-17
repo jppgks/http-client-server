@@ -19,8 +19,12 @@ public class Request {
 	}
 	
 	public Request(Method method, String file, String httpVersion, HashMap<String, String> headers, byte[] message) throws BadRequestException {
-		if (method == Method.POST || method == Method.PUT) {
+		if ((method == Method.POST || method == Method.PUT) && message == null) {
 			throw new BadRequestException();
+		}
+		
+		if (httpVersion == "HTTP/1.1") {
+			
 		}
 		
 		this.method = method;
