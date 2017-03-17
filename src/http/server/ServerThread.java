@@ -35,16 +35,18 @@ public class ServerThread implements Runnable {
 				if (request == null) {
 					// timeout: break the while loop
 					closed = true;
-				}
-				// handle request
-				
-				if ((request.getHeaders().containsKey("Connection") && request.getHeaders().get("Connection").equals("Close")) || request.getHttpVersion() == "HTTP/1.0") {
-					// set closed to true to break the while loop
-					closed = true;
+				} else {
+					// handle request
+					request.toString();
+					if ((request.getHeaders().containsKey("Connection") && request.getHeaders().get("Connection").equals("Close")) || request.getHttpVersion() == "HTTP/1.0") {
+						// set closed to true to break the while loop
+						closed = true;
+					}
 				}
 			}
 			// close connection
 			socket.close();
+			System.out.println("Connection closed");
 		} catch (BadRequestException e) {
 			// send bad request error 400
 		} catch (IOException e) {
