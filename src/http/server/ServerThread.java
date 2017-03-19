@@ -3,19 +3,15 @@ package http.server;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 
 import http.Method;
@@ -118,9 +114,11 @@ public class ServerThread implements Runnable {
 		Response response = null;
 		int messageLength;
 		HashMap<String,String> headers = new HashMap<>();
-		String date = java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME.format(ZonedDateTime.now(ZoneId.of("GMT")));
-		System.out.println(date);
+		headers.put("Date", java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME.format(ZonedDateTime.now(ZoneId.of("GMT"))));
 		
+		if (request.getHeaders().containsKey("Connection") && request.getHeaders().get("Connection").equals("close")) {
+			headers.put("Connection", "close");
+		}
 		
 		if (request.getMethod() == Method.GET || request.getMethod() == Method.HEAD) {
 			// TODO: check if page is modified since last time (304)

@@ -24,7 +24,14 @@ public class Request {
 		}
 		
 		if (httpVersion == "HTTP/1.1") {
-			
+			// check if host header is present
+			if ((! headers.containsKey("Host"))) {
+				throw new BadRequestException();
+			}
+		}
+		
+		if (file.equals("/")) {
+			file += "index.html";
 		}
 		
 		this.method = method;

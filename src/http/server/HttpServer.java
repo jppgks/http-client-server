@@ -15,6 +15,6 @@ public class HttpServer {
 		}
 	}
 	
-	static String path = "serverContent/";
+	static String path = "serverContent";
 
 }
