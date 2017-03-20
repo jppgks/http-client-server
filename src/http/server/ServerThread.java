@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -44,10 +45,10 @@ public class ServerThread implements Runnable {
 				} catch (SocketTimeoutException e) {
 					closed = true;
 				} catch (BadRequestException e) {
-					Path path = Paths.get("src/http/server/errorPages/400.html");
+					String body = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>400 - Bad Request</title></head><body><h1>400 - Bad Request</h1><p>The HTTP request sent was not valid.</p></body></html>";
 					HashMap<String, String> headers = new HashMap<>();
 					headers.put("Content-Type", "text/html");
-					send(new Response(400, headers, Files.readAllBytes(path), request.getHttpVersion()));
+					send(new Response(400, headers, body.getBytes(), request.getHttpVersion()));
 				} catch (SocketException e) {
 					closed = true;
 					break;
@@ -62,15 +63,15 @@ public class ServerThread implements Runnable {
 						Response response = handle(request);
 						send(response);
 					} catch (FileNotFoundException e) {
-						Path path = Paths.get("src/http/server/errorPages/404.html");
+						String body = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>404 - Not Found</title></head><body><h1>404 - Not Found</h1><p>The page you requested cannot be found on this server.</p></body></html>";
 						HashMap<String, String> headers = new HashMap<>();
 						headers.put("Content-Type", "text/html");
-						send(new Response(404, headers, Files.readAllBytes(path), request.getHttpVersion()));
+						send(new Response(404, headers, body.getBytes(), request.getHttpVersion()));
 					} catch (InternalServerException e) {
-						Path path = Paths.get("src/http/server/errorPages/500.html");
+						String body = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>500 - Internal Server Error</title></head><body><h1>500 - Internal Server Error</h1><p>The server experienced some issues.</p></body></html>";
 						HashMap<String, String> headers = new HashMap<>();
 						headers.put("Content-Type", "text/html");
-						send(new Response(500, headers, Files.readAllBytes(path), request.getHttpVersion()));
+						send(new Response(500, headers, body.getBytes(), request.getHttpVersion()));
 					}
 					if ((request.getHeaders().containsKey("Connection")
 							&& request.getHeaders().get("Connection").equals("Close"))
@@ -80,6 +81,7 @@ public class ServerThread implements Runnable {
 					}
 				}
 			}
+
 			// close connection
 			socket.close();
 			System.out.println("Connection closed");
