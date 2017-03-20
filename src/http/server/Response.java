@@ -51,7 +51,7 @@ public class Response {
         }
     }
 
-    private HashMap<String, String> getHeader() {
+    public HashMap<String, String> getHeader() {
         return this.header;
     }
 
