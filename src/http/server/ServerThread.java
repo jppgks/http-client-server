@@ -5,13 +5,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -46,7 +44,13 @@ public class ServerThread implements Runnable {
 				} catch (SocketTimeoutException e) {
 					closed = true;
 				} catch (BadRequestException e) {
-					// send bad request error 400
+					Path path = Paths.get("src/http/server/errorPages/400.html");
+					HashMap<String, String> headers = new HashMap<>();
+					headers.put("Content-Type", "text/html");
+					send(new Response(400, headers, Files.readAllBytes(path), request.getHttpVersion()));
+				} catch (SocketException e) {
+					closed = true;
+					break;
 				}
 				if (request == null) {
 					// timeout: break the while loop
@@ -58,11 +62,15 @@ public class ServerThread implements Runnable {
 						Response response = handle(request);
 						send(response);
 					} catch (FileNotFoundException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						Path path = Paths.get("src/http/server/errorPages/404.html");
+						HashMap<String, String> headers = new HashMap<>();
+						headers.put("Content-Type", "text/html");
+						send(new Response(404, headers, Files.readAllBytes(path), request.getHttpVersion()));
 					} catch (InternalServerException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						Path path = Paths.get("src/http/server/errorPages/500.html");
+						HashMap<String, String> headers = new HashMap<>();
+						headers.put("Content-Type", "text/html");
+						send(new Response(500, headers, Files.readAllBytes(path), request.getHttpVersion()));
 					}
 					if ((request.getHeaders().containsKey("Connection")
 							&& request.getHeaders().get("Connection").equals("Close"))
@@ -81,7 +89,7 @@ public class ServerThread implements Runnable {
 
 	}
 
-	private Request readRequest() throws BadRequestException, SocketTimeoutException {
+	private Request readRequest() throws BadRequestException, SocketTimeoutException, SocketException {
 		Request request = null;
 
 		String firstLine = readLine();
@@ -116,10 +124,7 @@ public class ServerThread implements Runnable {
 		String httpVersion = request.getHttpVersion();
 		byte[] message;
 		Response response = null;
-		int messageLength;
 		HashMap<String, String> headers = new HashMap<>();
-		headers.put("Date",
-				java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME.format(ZonedDateTime.now(ZoneId.of("GMT"))));
 
 		if (request.getHeaders().containsKey("Connection") && request.getHeaders().get("Connection").equals("close")) {
 			headers.put("Connection", "close");
@@ -128,11 +133,15 @@ public class ServerThread implements Runnable {
 		if (request.getMethod() == Method.GET || request.getMethod() == Method.HEAD) {
 			// TODO: check if page is modified since last time (304)
 			// read file
-			Path path = Paths.get(HttpServer.path + request.getFile());
+			Path path;
+			if (request.getFile().endsWith("/")) {
+				path = Paths.get(HttpServer.path + request.getFile() + "index.html");
+			} else {
+				path = Paths.get(HttpServer.path + request.getFile());
+			}
+
 			if (Files.exists(path) && Files.isRegularFile(path)) {
 				try {
-					messageLength = (int) Files.size(path);
-					headers.put("Content-Length", Integer.toString(messageLength));
 					headers.put("Content-Type", Files.probeContentType(path));
 					if (request.getMethod() == Method.HEAD) {
 						response = new Response(200, headers, httpVersion);
@@ -156,17 +165,17 @@ public class ServerThread implements Runnable {
 
 	private void send(Response response) throws IOException {
 		outToClient.writeBytes(response.getStatusLine() + "\r\n");
-		for (Map.Entry<String, String> entry : response.getHeader().entrySet()) {
+		for (Map.Entry<String, String> entry : response.getHeaders().entrySet()) {
 			outToClient.writeBytes(entry.getKey() + ": " + entry.getValue() + "\r\n");
 		}
 		outToClient.writeBytes("\r\n");
-		
+
 		if (response.getBody() != null) {
 			outToClient.write(response.getBody());
 		}
 	}
 
-	private HashMap<String, String> readHeaders() throws SocketTimeoutException {
+	private HashMap<String, String> readHeaders() throws SocketTimeoutException, SocketException {
 		HashMap<String, String> headers = new HashMap<>();
 
 		String header = null;
@@ -247,13 +256,13 @@ public class ServerThread implements Runnable {
 		return stream.toByteArray();
 	}
 
-	private String readLine() throws SocketTimeoutException {
+	private String readLine() throws SocketException, SocketTimeoutException {
 		String line = new String();
 		while (!line.contains("\r\n")) {
 			try {
 				int ch = inFromClient.read();
 				line += (char) ch;
-			} catch (SocketTimeoutException e) {
+			} catch (SocketTimeoutException | SocketException e) {
 				throw e;
 			} catch (IOException e) {
 				e.printStackTrace();

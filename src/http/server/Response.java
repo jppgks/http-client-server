@@ -1,6 +1,8 @@
 package http.server;
 
 import java.io.IOException;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 
 /**
@@ -9,23 +11,22 @@ import java.util.HashMap;
 public class Response {
 
     private int statusCode;
-    private HashMap<String, String> header;
+    private HashMap<String, String> headers;
     private byte[] body;
     private String httpVersion;
-    private String reasonPhrase;
 
     public Response(int statusCode, HashMap<String, String> header, byte[] body, String httpVersion) throws IOException {
         this.statusCode = statusCode;
-        this.header = header;
+        this.headers = header;
         this.body = body;
         this.httpVersion = httpVersion;
-        this.reasonPhrase = reasonPhrase;
+        addDefaultHeaders();
     }
     public Response(int statusCode, HashMap<String, String> header, String httpVersion) {
         this.statusCode = statusCode;
-        this.header = header;
+        this.headers = header;
         this.httpVersion = httpVersion;
-        this.reasonPhrase = reasonPhrase;
+        addDefaultHeaders();
     }
 
     private String getHttpVersion() {
@@ -51,8 +52,8 @@ public class Response {
         }
     }
 
-    public HashMap<String, String> getHeader() {
-        return this.header;
+    public HashMap<String, String> getHeaders() {
+        return this.headers;
     }
 
     private int getStatusCode() {
@@ -73,7 +74,20 @@ public class Response {
     public void print() {
         System.out.println("Status code: " + this.statusCode);
         System.out.println();
-        this.header.forEach((key, value) -> System.out.println(key + ": " + value));
+        this.headers.forEach((key, value) -> System.out.println(key + ": " + value));
+    }
+    
+    
+    /**
+     * Automatically adds headers to the response: date, content-length, server
+     */
+    private void addDefaultHeaders() {
+    	headers.put("Server", "SCJG");
+    	headers.put("Date", java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME.format(ZonedDateTime.now(ZoneId.of("GMT"))));
+    	
+    	if (getBody() != null) {
+    		headers.put("Content-Length", Integer.toString(getBody().length));
+    	}
     }
 }
 

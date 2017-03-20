@@ -30,10 +30,6 @@ public class Request {
 			}
 		}
 		
-		if (file.equals("/")) {
-			file += "index.html";
-		}
-		
 		this.method = method;
 		this.file = file;
 		this.httpVersion = httpVersion;
