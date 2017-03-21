@@ -1,15 +1,9 @@
 package http.client;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Scanner;
-
 import http.Method;
+
+import java.io.IOException;
+import java.util.*;
 
 public class HttpClient {
     public static void main(String args[]) {
@@ -24,40 +18,39 @@ public class HttpClient {
             String path = "output/" + new Date().getTime() + "/";
             response.save(path);
             response.print();
-            
+
             HashSet<Request> requests = response.handle();
             // order requests by host
             HashMap<String, ArrayList<Request>> requestsByHost = new HashMap<>();
             for (Request r : requests) {
-            	if (requestsByHost.containsKey(r.getHost() + ":" + r.getPort())) {
-            		requestsByHost.get(r.getHost() + ":" + r.getPort()).add(r);
-            	} else {
-            		ArrayList<Request> reqs = new ArrayList<>();
-            		reqs.add(r);
-            		requestsByHost.put(r.getHost() + ":" + r.getPort(), reqs);
-            	}
+                if (requestsByHost.containsKey(r.getHost() + ":" + r.getPort())) {
+                    requestsByHost.get(r.getHost() + ":" + r.getPort()).add(r);
+                } else {
+                    ArrayList<Request> reqs = new ArrayList<>();
+                    reqs.add(r);
+                    requestsByHost.put(r.getHost() + ":" + r.getPort(), reqs);
+                }
             }
-            
+
             if (requestsByHost.containsKey(connection.getHost() + ":" + connection.getPort())) {
-            	ArrayList<Request> requestsForConnection = requestsByHost.get(connection.getHost() + ":" + connection.getPort());
-            	for (Request r : requestsForConnection) {
-            		connection.execute(r).save(path);
-            	}
-            	connection.close();
-            	requestsByHost.remove(connection.getHost() + ":" + connection.getPort());
+                ArrayList<Request> requestsForConnection = requestsByHost.get(connection.getHost() + ":" + connection.getPort());
+                for (Request r : requestsForConnection) {
+                    connection.execute(r).save(path);
+                }
+                connection.close();
+                requestsByHost.remove(connection.getHost() + ":" + connection.getPort());
             }
-            
+
             for (Map.Entry<String, ArrayList<Request>> entry : requestsByHost.entrySet()) {
-            	ArrayList<Request> requestsForConnection = entry.getValue();
-            	connection = new Connection(requestsForConnection.get(0).getHost(), requestsForConnection.get(0).getPort());
-            	for (Request r : requestsForConnection) {
-            		connection.execute(r).save(path);
-            	}
-            	connection.close();
+                ArrayList<Request> requestsForConnection = entry.getValue();
+                connection = new Connection(requestsForConnection.get(0).getHost(), requestsForConnection.get(0).getPort());
+                for (Request r : requestsForConnection) {
+                    connection.execute(r).save(path);
+                }
+                connection.close();
             }
-            
-            
-            
+
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -76,34 +69,34 @@ public class HttpClient {
         // Parse command line arguments (HTTPCommand, URI, Port)
         Method method = Method.valueOf(args[0]);
         String address = args[1];
-        
+
         // remove protocol (if present)
         if (address.startsWith("http://")) {
-        	address = address.substring("http://".length());
+            address = address.substring("http://".length());
         } else if (address.startsWith("https://")) {
-        	address = address.substring("https://".length());
+            address = address.substring("https://".length());
         }
-        
+
         String host;
         String file;
         if (address.contains("/")) {
-        	host = address.substring(0, address.indexOf("/"));
-        	file = address.substring(address.indexOf("/"));
+            host = address.substring(0, address.indexOf("/"));
+            file = address.substring(address.indexOf("/"));
         } else {
-        	host = address;
-        	file = "/";
+            host = address;
+            file = "/";
         }
         int port = Integer.parseInt(args[2]);
         String body = "";
-        
+
         if (method == Method.POST || method == Method.PUT) {
-        	// read from interactive command prompt
-        	System.out.print("Enter the body of your request: ");
-        	Scanner scan = new Scanner(System.in);
-        	body = scan.next();
-        	scan.close();
+            // read from interactive command prompt
+            System.out.print("Enter the body of your request: ");
+            Scanner scan = new Scanner(System.in);
+            body = scan.next();
+            scan.close();
         }
-        
+
         return new Request(method, host, port, file, body);
     }
 }
