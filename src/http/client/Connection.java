@@ -1,5 +1,7 @@
 package http.client;
 
+import http.Method;
+
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -7,8 +9,6 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.Arrays;
 import java.util.HashMap;
-
-import http.Method;
 
 public class Connection {
 	public Connection(String host, int port) {
@@ -31,7 +31,9 @@ public class Connection {
 	public Response execute(Request request) throws IOException {
 		// Check if hosts and port of request matches these of the connection
 		if (!(this.getHost().equals(request.getHost()) && this.getPort() == request.getPort())) {
-			throw new IllegalArgumentException();
+			this.close();
+			Connection connection = new Connection(request.getHost(), request.getPort());
+			return connection.execute(request);
 		}
 		
 		// Write initial line and header
@@ -60,7 +62,8 @@ public class Connection {
 		
 		// Redirect if needed
 		if (String.valueOf(response.getStatusCode()).charAt(0) == '3') {
-            // Generate new request
+			System.out.println("CONNECTION - Page moved, redirecting to new location.\n");
+			// Generate new request
             Request newRequest = new Request(request.getMethod(), response.getRedirectLocation());
             // Execute new request and make sure to return that response
             response = this.execute(newRequest);
@@ -74,7 +77,7 @@ public class Connection {
 			outToServer.close();
 			inFromServer.close();
 			clientSocket.close();
-			System.out.println("Connection to " + getHost() + " at port " + getPort() + " closed.");
+			System.out.println("CONNECTION - Connection to " + getHost() + " at port " + getPort() + " closed.\n");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
