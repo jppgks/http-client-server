@@ -1,6 +1,6 @@
 package http.server.exceptions;
 
-public class InternalServerException extends Exception {
+public class InternalServerException extends ServerException {
 
 	/**
 	 * 

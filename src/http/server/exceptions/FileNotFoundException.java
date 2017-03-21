@@ -1,6 +1,6 @@
 package http.server.exceptions;
 
-public class FileNotFoundException extends Exception {
+public class FileNotFoundException extends ServerException {
 
 	/**
 	 * 
