@@ -65,7 +65,7 @@ class Response {
      */
     private void addDefaultHeaders() {
         headers.put("Server", "SCJG");
-        headers.put("Date", java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME.format(ZonedDateTime.now(ZoneId.of("GMT"))));
+        headers.putIfAbsent("Date", java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME.format(ZonedDateTime.now(ZoneId.of("GMT"))));
 
         if (body != null) {
             headers.put("Content-Length", Integer.toString(body.length));
