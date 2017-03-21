@@ -7,7 +7,7 @@ import java.util.HashMap;
 /**
  * Stores relevant response attributes.
  */
-public class Response {
+class Response {
 
     private int statusCode;
     private HashMap<String, String> headers;
@@ -21,6 +21,7 @@ public class Response {
         this.httpVersion = httpVersion;
         addDefaultHeaders();
     }
+
     Response(int statusCode, HashMap<String, String> header, String httpVersion) {
         this.statusCode = statusCode;
         this.headers = header;
@@ -47,7 +48,7 @@ public class Response {
         }
     }
 
-    public HashMap<String, String> getHeaders() {
+    HashMap<String, String> getHeaders() {
         return this.headers;
     }
 
@@ -55,30 +56,20 @@ public class Response {
         return httpVersion + " " + statusCode + " " + getReasonPhrase();
     }
 
-    public byte[] getBody() {
+    byte[] getBody() {
         return body;
     }
 
     /**
-     * Prints the status code and header to standard output
-     */
-    public void print() {
-        System.out.println("Status code: " + this.statusCode);
-        System.out.println();
-        this.headers.forEach((key, value) -> System.out.println(key + ": " + value));
-    }
-    
-    
-    /**
      * Automatically adds headers to the response: date, content-length, server
      */
     private void addDefaultHeaders() {
-    	headers.put("Server", "SCJG");
-    	headers.put("Date", java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME.format(ZonedDateTime.now(ZoneId.of("GMT"))));
-    	
-    	if (body != null) {
-    		headers.put("Content-Length", Integer.toString(body.length));
-    	}
+        headers.put("Server", "SCJG");
+        headers.put("Date", java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME.format(ZonedDateTime.now(ZoneId.of("GMT"))));
+
+        if (body != null) {
+            headers.put("Content-Length", Integer.toString(body.length));
+        }
     }
 }
 
