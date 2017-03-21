@@ -40,15 +40,16 @@ public class ServerThread implements Runnable {
             socket.setSoTimeout(10000);
             Request request = null;
             while (!closed) {
+                // Read request
                 try {
                     request = readRequest();
                 } catch (SocketTimeoutException e) {
                     closed = true;
                 } catch (BadRequestException e) {
-                    String body = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>400 - Bad Request</title></head><body><h1>400 - Bad Request</h1><p>The HTTP request sent was not valid.</p></body></html>";
+                    String body = e.getHtmlBody();
                     HashMap<String, String> headers = new HashMap<>();
                     headers.put("Content-Type", "text/html");
-                    send(new Response(400, headers, body.getBytes(), request.getHttpVersion()));
+                    send(new Response(e.getStatusCode(), headers, body.getBytes(), request.getHttpVersion()));
                 } catch (SocketException e) {
                     closed = true;
                     break;
@@ -56,29 +57,31 @@ public class ServerThread implements Runnable {
                 if (request == null) {
                     // timeout: break the while loop
                     closed = true;
-                } else {
-                    // handle request
-                    System.out.println(request.toString());
-                    try {
-                        Response response = handle(request);
-                        send(response);
-                    } catch (FileNotFoundException e) {
-                        String body = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>404 - Not Found</title></head><body><h1>404 - Not Found</h1><p>The page you requested cannot be found on this server.</p></body></html>";
-                        HashMap<String, String> headers = new HashMap<>();
-                        headers.put("Content-Type", "text/html");
-                        send(new Response(404, headers, body.getBytes(), request.getHttpVersion()));
-                    } catch (InternalServerException e) {
-                        String body = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>500 - Internal Server Error</title></head><body><h1>500 - Internal Server Error</h1><p>The server experienced some issues.</p></body></html>";
-                        HashMap<String, String> headers = new HashMap<>();
-                        headers.put("Content-Type", "text/html");
-                        send(new Response(500, headers, body.getBytes(), request.getHttpVersion()));
-                    }
-                    if ((request.getHeaders().containsKey("Connection")
-                            && request.getHeaders().get("Connection").equals("Close"))
-                            || request.getHttpVersion().equals("HTTP/1.0")) {
-                        // set closed to true to break the while loop
-                        closed = true;
-                    }
+                    break;
+                }
+                // Print request to standard output
+                System.out.println(request.toString());
+                // Handle request and send response back to client
+                try {
+                    Response response = handle(request);
+                    send(response);
+                } catch (FileNotFoundException e) {
+                    String body = e.getHtmlBody();
+                    HashMap<String, String> headers = new HashMap<>();
+                    headers.put("Content-Type", "text/html");
+                    send(new Response(e.getStatusCode(), headers, body.getBytes(), request.getHttpVersion()));
+                } catch (InternalServerException e) {
+                    String body = e.getHtmlBody();
+                    HashMap<String, String> headers = new HashMap<>();
+                    headers.put("Content-Type", "text/html");
+                    send(new Response(e.getStatusCode(), headers, body.getBytes(), request.getHttpVersion()));
+                }
+                // Check if this is the last request from the client
+                if ((request.getHeaders().containsKey("Connection")
+                        && request.getHeaders().get("Connection").equals("Close"))
+                        || request.getHttpVersion().equals("HTTP/1.0")) {
+                    // set closed to true to break the while loop
+                    closed = true;
                 }
             }
 
