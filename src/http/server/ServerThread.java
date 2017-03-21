@@ -1,5 +1,10 @@
 package http.server;
 
+import http.Method;
+import http.server.exceptions.BadRequestException;
+import http.server.exceptions.FileNotFoundException;
+import http.server.exceptions.InternalServerException;
+
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -7,18 +12,12 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-
-import http.Method;
-import http.server.exceptions.BadRequestException;
-import http.server.exceptions.FileNotFoundException;
-import http.server.exceptions.InternalServerException;
 
 public class ServerThread implements Runnable {
 
@@ -27,8 +26,9 @@ public class ServerThread implements Runnable {
 	private BufferedInputStream inFromClient;
 	private boolean closed;
 
-	public ServerThread(Socket socket) throws IOException {
-		this.socket = socket;
+	ServerThread(Socket socket) throws IOException {
+        System.out.println("SERVERTHREAD - Connected");
+        this.socket = socket;
 
 		outToClient = new DataOutputStream(socket.getOutputStream());
 		inFromClient = new BufferedInputStream(socket.getInputStream());
@@ -75,7 +75,7 @@ public class ServerThread implements Runnable {
 					}
 					if ((request.getHeaders().containsKey("Connection")
 							&& request.getHeaders().get("Connection").equals("Close"))
-							|| request.getHttpVersion() == "HTTP/1.0") {
+							|| request.getHttpVersion().equals("HTTP/1.0")) {
 						// set closed to true to break the while loop
 						closed = true;
 					}
@@ -84,7 +84,7 @@ public class ServerThread implements Runnable {
 
 			// close connection
 			socket.close();
-			System.out.println("Connection closed");
+			System.out.println("SERVERTHREAD - Connection closed");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -105,17 +105,15 @@ public class ServerThread implements Runnable {
 
 		HashMap<String, String> headers = readHeaders();
 
-		byte[] body;
 		if (method == Method.POST || method == Method.PUT) {
-			// read message
-			body = readMessage(headers);
+			// Read message
+            byte[] body = readMessage(headers);
+            // Read (optional) footers
 			if (headers.containsKey("Transfer-Encoding") && "chunked".equals(headers.get("Transfer-Encoding"))) {
-				// read (optional) footers
 				HashMap<String, String> footers = readHeaders();
 				headers.putAll(footers);
-
-				request = new Request(method, file, httpVersion, headers, body);
 			}
+            request = new Request(method, file, httpVersion, headers, body);
 		} else {
 			request = new Request(method, file, httpVersion, headers);
 		}
@@ -158,8 +156,12 @@ public class ServerThread implements Runnable {
 				throw new FileNotFoundException();
 			}
 		} else {
-			// put or post
-			// save message
+			// Save message on PUT or POST
+			request.saveMessage();
+			// Construct response
+            headers.put("Content-Type", "text/plain");
+            String successMsg = "Succesfully posted request body.";
+            response = new Response(200, headers, successMsg.getBytes(), httpVersion);
 		}
 		// success
 		return response;

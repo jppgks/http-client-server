@@ -3,6 +3,10 @@ package http.server;
 import http.Method;
 import http.server.exceptions.BadRequestException;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.Date;
 import java.util.HashMap;
 
 public class Request {
@@ -14,16 +18,16 @@ public class Request {
 	
 	private byte[] message;
 	
-	public Request(Method method, String file, String httpVersion, HashMap<String, String> headers) throws BadRequestException {
+	Request(Method method, String file, String httpVersion, HashMap<String, String> headers) throws BadRequestException {
 		this(method, file, httpVersion, headers, null);
 	}
 	
-	public Request(Method method, String file, String httpVersion, HashMap<String, String> headers, byte[] message) throws BadRequestException {
+	Request(Method method, String file, String httpVersion, HashMap<String, String> headers, byte[] message) throws BadRequestException {
 		if ((method == Method.POST || method == Method.PUT) && message == null) {
 			throw new BadRequestException();
 		}
 		
-		if (httpVersion == "HTTP/1.1") {
+		if (httpVersion.equals("HTTP/1.1")) {
 			// check if host header is present
 			if ((! headers.containsKey("Host"))) {
 				throw new BadRequestException();
@@ -37,24 +41,41 @@ public class Request {
 		this.message = message;
 	}
 
-	public Method getMethod() {
+	Method getMethod() {
 		return method;
 	}
 
-	public String getFile() {
+	String getFile() {
 		return file;
 	}
 
-	public String getHttpVersion() {
+	String getHttpVersion() {
 		return httpVersion;
 	}
 
-	public HashMap<String, String> getHeaders() {
+	HashMap<String, String> getHeaders() {
 		return headers;
 	}
 
-	public byte[] getMessage() {
-		return message;
+	void saveMessage() {
+		assert message != null : "SERVERTHREAD - Message attempted to store was null";
+
+		String path = "output/" + new Date().getTime() + "/";
+		File file = new File(path + "request_message.txt");
+		// Create new file
+		try {
+			file.getParentFile().mkdir();
+			file.createNewFile();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		// Write request message to file
+		try {
+			Files.write(file.toPath(), message);
+			System.out.println("Request message written to: " + file.getPath());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override
@@ -63,7 +84,7 @@ public class Request {
 			return this.getMethod() + " " + this.getFile() + " " + this.getHttpVersion() + "\n" + this.getHeaders();
 		} else {
 			return this.getMethod() + " " + this.getFile() + " " + this.getHttpVersion() + "\n" + this.getHeaders()
-			+ "\n\n" + new String(this.getMessage());
+			+ "\n\n" + new String(this.message);
 		}
 	}
 }
