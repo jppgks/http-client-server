@@ -4,6 +4,7 @@ import http.Method;
 import http.server.exceptions.BadRequestException;
 import http.server.exceptions.FileNotFoundException;
 import http.server.exceptions.InternalServerException;
+import org.apache.http.client.utils.DateUtils;
 import http.server.exceptions.ServerException;
 
 import java.io.BufferedInputStream;
@@ -16,7 +17,10 @@ import java.net.SocketTimeoutException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -129,49 +133,71 @@ public class ServerThread implements Runnable {
 			headers.put("Connection", "close");
 		}
 
-		if (request.getMethod() == Method.GET || request.getMethod() == Method.HEAD) {
-			// TODO: check if page is modified since last time (304)
-			// read file
-			Path path;
-			if (request.getFile().endsWith("/")) {
-				path = Paths.get(HttpServer.path + request.getFile() + "index.html");
-			} else {
-				path = Paths.get(HttpServer.path + request.getFile());
-			}
+        if (request.getMethod() == Method.GET || request.getMethod() == Method.HEAD) {
+            //  read file
+            Path path;
+            if (request.getFile().endsWith("/")) {
+                path = Paths.get(HttpServer.path + request.getFile() + "index.html");
+            } else {
+                path = Paths.get(HttpServer.path + request.getFile());
+            }
 
-			if (Files.exists(path) && Files.isRegularFile(path)) {
-				try {
-					headers.put("Content-Type", Files.probeContentType(path));
-					if (request.getMethod() == Method.HEAD) {
-						response = new Response(200, headers, httpVersion);
-					} else {
-						message = Files.readAllBytes(path);
-						response = new Response(200, headers, message, httpVersion);
-					}
-				} catch (IOException e) {
-					throw new InternalServerException();
-				}
-			} else {
-				throw new FileNotFoundException();
-			}
-		} else {
-			// Save message on PUT or POST
-			request.saveMessage();
-			// Construct response
-			headers.put("Content-Type", "text/plain");
-			String successMsg = "Succesfully posted request body.";
-			response = new Response(200, headers, successMsg.getBytes(), httpVersion);
-		}
-		// success
-		return response;
-	}
+            if (Files.exists(path) && Files.isRegularFile(path)) {
+                try {
+                    headers.put("Content-Type", Files.probeContentType(path));
+                    if (request.getMethod() == Method.HEAD) {
+                        response = new Response(200, headers, httpVersion);
+                    } else {
+                        // Check if page is modified since time given in header (if given)
+                        String since = request.getHeaders().getOrDefault("If-Modified-Since", null);
+                        if (since == null || fileIsModified(path, since)) {
+                            // Page was modified since time given in header, or no If-Modified-Since in header
+                            message = Files.readAllBytes(path);
+                            response = new Response(200, headers, message, httpVersion);
+                        } else {
+                            // File wasn't modified
+                            ZonedDateTime sinceDate = DateUtils.parseDate(since).toInstant().atZone(ZoneId.of("GMT"));
+                            headers.put("Date", java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME.format(sinceDate));
+                            response = new Response(304, headers, httpVersion);
+                        }
+                    }
+                } catch (IOException e) {
+                    throw new InternalServerException();
+                }
+            } else {
+                throw new FileNotFoundException();
+            }
+        } else {
+            // Save message on PUT or POST
+            request.saveMessage();
+            // Construct response
+            headers.put("Content-Type", "text/plain");
+            String successMsg = "Succesfully posted request body.";
+            response = new Response(200, headers, successMsg.getBytes(), httpVersion);
+        }
+        // success
+        return response;
+    }
 
-	private void send(Response response) throws IOException {
-		outToClient.writeBytes(response.getStatusLine() + "\r\n");
-		for (Map.Entry<String, String> entry : response.getHeaders().entrySet()) {
-			outToClient.writeBytes(entry.getKey() + ": " + entry.getValue() + "\r\n");
-		}
-		outToClient.writeBytes("\r\n");
+    /**
+     * Checks if the given file has been modified since the given date.
+     *
+     * @param path      The file to check modification date for.
+     * @param since     The time to compare against.
+     * @return          {@code true} if modified since, {@code false} otherwise.
+     */
+    private boolean fileIsModified(Path path, String since) {
+        Date sinceDate = DateUtils.parseDate(since);
+        Date lastModified = new Date(path.toFile().lastModified());
+        return lastModified.after(sinceDate);
+    }
+
+    private void send(Response response) throws IOException {
+        outToClient.writeBytes(response.getStatusLine() + "\r\n");
+        for (Map.Entry<String, String> entry : response.getHeaders().entrySet()) {
+            outToClient.writeBytes(entry.getKey() + ": " + entry.getValue() + "\r\n");
+        }
+        outToClient.writeBytes("\r\n");
 
 		if (response.getBody() != null) {
 			outToClient.write(response.getBody());
