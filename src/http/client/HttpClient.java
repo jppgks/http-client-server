@@ -15,7 +15,7 @@ public class HttpClient {
             // Execute request
             Response response = connection.execute(request);
             // Display response
-            String path = "output/" + new Date().getTime() + "/";
+            String path = "files/" + new Date().getTime() + "/";
             response.save(path);
             response.print();
 
@@ -45,7 +45,7 @@ public class HttpClient {
                 requestsByHost.remove(connection.getHost() + ":" + connection.getPort());
             }
 
-            // execute requests by host
+            // execute requests for external resources, different host
             for (Map.Entry<String, ArrayList<Request>> entry : requestsByHost.entrySet()) {
                 ArrayList<Request> requestsForConnection = entry.getValue();
                 connection = new Connection(requestsForConnection.get(0).getHost(), requestsForConnection.get(0).getPort());
@@ -53,7 +53,7 @@ public class HttpClient {
                 	if (connection.isClosed()) {
                 		connection.initialize();
                 	}
-                    connection.execute(r).save(path);
+                    connection.execute(r).save(path + "external/");
                 }
                 connection.close();
             }

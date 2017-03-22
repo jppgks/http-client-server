@@ -57,10 +57,10 @@ class Response {
     }
 
     private void setName(String name) {
-        this.name = name.replaceAll("[^A-Za-z0-9]", "");
-        if (this.name.isEmpty()) {
-            this.name = "index";
-        }
+    	if (name.endsWith("/")) {
+    		name += "index." + getExtension();
+    	}
+        this.name = name;
     }
 
     private String getHost() {
@@ -122,14 +122,15 @@ class Response {
 
     void save(String path) {
         if (body != null) {
-            File file = new File(path + getName() + "." + getExtension());
-            // Try new filename if file already existed
-            while (file.exists()) {
-                file = new File(path + getName() + Integer.toString(new Random().nextInt()) + "." + getExtension());
+            File file = new File(path + getName());
+            // Show message if file already exists
+            if (file.exists()) {
+            	System.err.println("Could not write to " + path + ". File already exists.");
+            	return;
             }
             // Create new file
             try {
-                file.getParentFile().mkdir();
+                file.getParentFile().mkdirs();
                 file.createNewFile();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -137,7 +138,7 @@ class Response {
             // Write response body to file
             try {
                 Files.write(file.toPath(), getBody());
-                System.out.println("HTML written to: " + file.getPath());
+                System.out.println("File written to: " + file.getPath());
             } catch (IOException e) {
                 e.printStackTrace();
             }
