@@ -1,15 +1,14 @@
 package http.client;
 
-import http.Method;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import http.Method;
 
 /**
  * Stores relevant response attributes.
@@ -57,22 +56,28 @@ class Response {
 		return this.name;
 	}
 
+	/**
+	 * Delete characters that are not allowed in the filename and adds an
+	 * extension if the file has no extension
+	 * 
+	 * @param name
+	 */
 	private void setName(String name) {
 		if (name.contains("?")) {
 			// take part before ?
 			name = name.substring(0, name.indexOf("?"));
 		}
-		
+
 		if (name.contains("#")) {
 			// take part before #
 			name = name.substring(0, name.indexOf("#"));
 		}
-		
+
 		if (name.endsWith("/")) {
 			name += "index." + getExtension();
 		}
-		
-		if (! name.contains(".")) {
+
+		if (!name.contains(".")) {
 			// name has no extension
 			name += "." + getExtension();
 		}
@@ -99,7 +104,7 @@ class Response {
 			Pattern r = Pattern.compile(pattern);
 			Matcher m = r.matcher(new String(getBody()));
 			requests.addAll(findMatches(m));
-			
+
 			// retrieve CSS and other resources in link tags
 			pattern = "(?i)<link .*?href=\"(.*?)\".*?";
 			r = Pattern.compile(pattern);
@@ -108,8 +113,14 @@ class Response {
 		}
 		return requests;
 	}
-	
-	
+
+	/**
+	 * Find matches and return the Requests for these resources
+	 * 
+	 * @param m
+	 *            Matcher that will be used to find matches
+	 * @return HashSet with Requests for which matches were found
+	 */
 	private HashSet<Request> findMatches(Matcher m) {
 		HashSet<Request> requests = new HashSet<>();
 		while (m.find()) {
@@ -148,6 +159,13 @@ class Response {
 		return requests;
 	}
 
+	/**
+	 * Save the Response on disk at the given path. Non-existent files and
+	 * directories will be created
+	 * 
+	 * @param path
+	 *            Path to the place where the file will be saved
+	 */
 	void save(String path) {
 		if (body != null) {
 			File file = new File(path + getName());
@@ -173,12 +191,18 @@ class Response {
 		}
 	}
 
+	/**
+	 * Checks for a given path whether it is relative or not.
+	 * 
+	 * @param path
+	 * @return boolean that indicates whether the given path is relative or not
+	 */
 	private boolean isRelativePath(String path) {
 		return !(path.startsWith("http://") || path.startsWith("https://") || path.startsWith("//"));
 	}
 
 	/**
-	 * @return Returns the file extension for a file of a given MIME-type The
+	 * @return Returns the file extension for a file of a given MIME-type. The
 	 *         MIME-type is looked up in the headers.
 	 */
 	private String getExtension() {
