@@ -15,7 +15,7 @@ public class HttpClient {
             // Execute request
             Response response = connection.execute(request);
             // Display response
-            String path = "files/" + new Date().getTime() + "/";
+            String path = "files/" + new Date().getTime();
             response.save(path);
             response.print();
 
@@ -53,7 +53,7 @@ public class HttpClient {
                 	if (connection.isClosed()) {
                 		connection.initialize();
                 	}
-                    connection.execute(r).save(path + "external/");
+                    connection.execute(r).save(path + "/external");
                 }
                 connection.close();
             }

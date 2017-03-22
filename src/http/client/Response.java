@@ -171,7 +171,7 @@ class Response {
 			File file = new File(path + getName());
 			// Show message if file already exists
 			if (file.exists()) {
-				System.err.println("Could not write to " + path + ". File already exists.");
+				System.err.println("Could not write to " + path + getName() + ". File already exists.");
 				return;
 			}
 			// Create new file
