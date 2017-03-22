@@ -13,13 +13,10 @@ import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Date;
 
 import http.Method;
 import http.server.exceptions.BadRequestException;
@@ -148,21 +145,23 @@ public class ServerThread implements Runnable {
 			if (Files.exists(path) && Files.isRegularFile(path)) {
 				try {
 					headers.put("Content-Type", Files.probeContentType(path));
-					if (request.getMethod() == Method.HEAD) {
-						response = new Response(200, headers, httpVersion);
-					} else {
-						// Check if page is modified since time given in header
-						// (if given)
-						String since = request.getHeaders().getOrDefault("If-Modified-Since", null);
-						if (since == null || fileIsModified(path, since)) {
-							// Page was modified since time given in header, or
-							// no If-Modified-Since in header
+					// Check if page is modified since time given in header
+					// (if given)
+					String since = request.getHeaders().getOrDefault("If-Modified-Since", null);
+					if (since == null || fileIsModified(path, since)) {
+						// Page was modified since time given in header, or
+						// no If-Modified-Since in header
+						if (request.getMethod() == Method.HEAD) {
+							headers.put("Content-Length", Long.toString(Files.size(path)));
+							response = new Response(200, headers, httpVersion);
+						} else {
 							message = Files.readAllBytes(path);
 							response = new Response(200, headers, message, httpVersion);
-						} else {
-							// File wasn't modified
-							response = new Response(304, headers, httpVersion);
 						}
+					} else {
+						// File wasn't modified
+						headers.put("Content-Length", Long.toString(Files.size(path)));
+						response = new Response(304, headers, httpVersion);
 					}
 				} catch (IOException e) {
 					throw new InternalServerException();
