@@ -101,6 +101,7 @@ public class HttpClient {
             // read from interactive command prompt
             System.out.print("Enter the body of your request: ");
             Scanner scan = new Scanner(System.in);
+            scan.useDelimiter("\r\n\r\n");
             body = scan.next();
             scan.close();
         }
