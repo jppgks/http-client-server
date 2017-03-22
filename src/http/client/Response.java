@@ -100,14 +100,14 @@ class Response {
 		if (body != null && getHeader().get("Content-Type").contains("text/html")) {
 			// Only retrieve other objects embedded in an HTML file
 			// retrieve objects of the pattern <... src="<location>" ...>
-			String pattern = "(?i)<.*? src=\"(.*?)\".*?>";
-			Pattern r = Pattern.compile(pattern);
+			String pattern = "<.*? src=\"(.*?)\".*?>";
+			Pattern r = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);
 			Matcher m = r.matcher(new String(getBody()));
 			requests.addAll(findMatches(m));
 
 			// retrieve CSS and other resources in link tags
-			pattern = "(?i)<link .*?href=\"(.*?)\".*?";
-			r = Pattern.compile(pattern);
+			pattern = "<link .*?href=\"(.*?)\".*?";
+			r = Pattern.compile(pattern, Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);
 			m = r.matcher(new String(getBody()));
 			requests.addAll(findMatches(m));
 		}
@@ -129,9 +129,11 @@ class Response {
 			System.out.println(path);
 			if (isRelativePath(path)) {
 				// request on the same host
+				String newPath = getName().substring(0, getName().lastIndexOf("/"));
 				if (!path.startsWith("/")) {
 					path = "/" + path;
 				}
+				path = newPath + path;
 				requests.add(new Request(Method.GET, getHost(), getPort(), path));
 			} else {
 				// remove protocol (if present)
