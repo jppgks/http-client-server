@@ -16,6 +16,7 @@ class Connection {
     private Socket clientSocket;
     private DataOutputStream outToServer;
     private BufferedInputStream inFromServer;
+    private boolean closed = false;
 
     Connection(String host, int port) {
         this.host = host;
@@ -24,7 +25,7 @@ class Connection {
         initialize();
     }
 
-    private void initialize() {
+    void initialize() {
         try {
             clientSocket = new Socket(getHost(), getPort());
             outToServer = new DataOutputStream(clientSocket.getOutputStream());
@@ -73,6 +74,11 @@ class Connection {
             Request newRequest = new Request(request.getMethod(), response.getRedirectLocation());
             // Execute new request and make sure to return that response
             response = this.execute(newRequest);
+        }
+        
+        if (headers.containsKey("Connection") && headers.get("Connection").equals("close")) {
+        	this.closed = true;
+        	close();
         }
 
         return response;
@@ -217,5 +223,9 @@ class Connection {
 
     int getPort() {
         return this.port;
+    }
+    
+    boolean isClosed() {
+    	return this.closed;
     }
 }

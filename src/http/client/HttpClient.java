@@ -32,19 +32,27 @@ public class HttpClient {
                 }
             }
 
+            // execute requests for current host
             if (requestsByHost.containsKey(connection.getHost() + ":" + connection.getPort())) {
                 ArrayList<Request> requestsForConnection = requestsByHost.get(connection.getHost() + ":" + connection.getPort());
                 for (Request r : requestsForConnection) {
+                	if (connection.isClosed()) {
+                		connection.initialize();
+                	}
                     connection.execute(r).save(path);
                 }
                 connection.close();
                 requestsByHost.remove(connection.getHost() + ":" + connection.getPort());
             }
 
+            // execute requests by host
             for (Map.Entry<String, ArrayList<Request>> entry : requestsByHost.entrySet()) {
                 ArrayList<Request> requestsForConnection = entry.getValue();
                 connection = new Connection(requestsForConnection.get(0).getHost(), requestsForConnection.get(0).getPort());
                 for (Request r : requestsForConnection) {
+                	if (connection.isClosed()) {
+                		connection.initialize();
+                	}
                     connection.execute(r).save(path);
                 }
                 connection.close();
