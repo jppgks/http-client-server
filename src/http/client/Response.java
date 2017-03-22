@@ -129,11 +129,11 @@ class Response {
 			System.out.println(path);
 			if (isRelativePath(path)) {
 				// request on the same host
-				String newPath = getName().substring(0, getName().lastIndexOf("/"));
 				if (!path.startsWith("/")) {
-					path = "/" + path;
+					// subdirectory of the current directory
+					String newPath = getName().substring(0, getName().lastIndexOf("/"));
+					path = newPath + "/" + path;
 				}
-				path = newPath + path;
 				requests.add(new Request(Method.GET, getHost(), getPort(), path));
 			} else {
 				// remove protocol (if present)
