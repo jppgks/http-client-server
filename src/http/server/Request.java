@@ -2,6 +2,7 @@ package http.server;
 
 import http.Method;
 import http.server.exceptions.BadRequestException;
+import jdk.nashorn.internal.ir.debug.JSONWriter;
 
 import java.io.File;
 import java.io.IOException;
@@ -57,25 +58,37 @@ public class Request {
         return headers;
     }
 
-    void saveMessage() {
+    String saveMessage() {
         assert message != null : "SERVERTHREAD - Message attempted to store was null";
 
-        String path = "output/" + new Date().getTime() + "/";
-        File file = new File(path + "request_message.txt");
+        String path = "server/" + new Date().getTime() + "/";
+        File file = new File(path + this.getMethod().getName() + ".json");
         // Create new file
         try {
-            file.getParentFile().mkdir();
+            file.getParentFile().mkdirs();
             file.createNewFile();
         } catch (IOException e) {
             e.printStackTrace();
         }
         // Write request message to file
+        String json = "{\r\n"
+        		+ "  " + "\"method\": \"" + jsonEscape(this.getMethod().getName()) + "\"," + "\r\n"
+        		+ "  " + "\"version\": \"" + jsonEscape(this.getHttpVersion()) + "\"," + "\r\n"
+        		+ "  " + "\"file\": \"" + jsonEscape(this.getFile()) + "\"," + "\r\n"
+        		+ "  " + "\"message\": \"" + jsonEscape(new String(message)) + "\"" + "\r\n"
+        		+ "}";
         try {
-            Files.write(file.toPath(), message);
+            Files.write(file.toPath(), json.getBytes());
             System.out.println("Request message written to: " + file.getPath());
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return json;
+    }
+    
+    // TODO: place in other file, along with other methods that can be reused
+    public String jsonEscape(String in) {
+    	return in.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t");
     }
 
     @Override

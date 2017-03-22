@@ -45,25 +45,27 @@ public class ServerThread implements Runnable {
 			socket.setSoTimeout(10000);
 			Request request = null;
 			while (!closed) {
-				// Read request
 				try {
+					// Read request
 					request = readRequest();
-				} catch (SocketTimeoutException e) {
+				} catch (SocketTimeoutException | SocketException e) {
+					// Close connection when timed out
 					closed = true;
-				} catch (BadRequestException e) {
+					break;
+				} catch (ServerException e) {
+					// catch ServerException and send error page
 					String body = e.getHtmlBody();
 					HashMap<String, String> headers = new HashMap<>();
 					headers.put("Content-Type", "text/html");
 					send(new Response(e.getStatusCode(), headers, body.getBytes(), request.getHttpVersion()));
-				} catch (SocketException e) {
-					closed = true;
-					break;
 				}
+				
 				if (request == null) {
 					// timeout: break the while loop
 					closed = true;
 					break;
 				}
+				
 				// Print request to standard output
 				System.out.println(request.toString());
 				// Handle request and send response back to client
@@ -171,11 +173,10 @@ public class ServerThread implements Runnable {
 			}
 		} else {
 			// Save message on PUT or POST
-			request.saveMessage();
+			String json = request.saveMessage();
 			// Construct response
-			headers.put("Content-Type", "text/plain");
-			String successMsg = "Succesfully posted request body.";
-			response = new Response(200, headers, successMsg.getBytes(), httpVersion);
+			headers.put("Content-Type", "application/json");
+			response = new Response(200, headers, json.getBytes(), httpVersion);
 		}
 		// success
 		return response;
