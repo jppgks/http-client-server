@@ -61,8 +61,9 @@ public class ServerThreadTest {
      */
     private void createIndexHtmlFile() throws IOException {
         // Create index.html in files directory
-        Paths.get(HttpServer.getPath()).toFile().mkdirs();
-        File file = Paths.get(HttpServer.getPath() + "/1/index.html").toFile();
+        String path = HttpServer.getPath() + "/1";
+        Paths.get(path).toFile().mkdirs();
+        File file = Paths.get(path + "/index.html").toFile();
         Files.write(file.toPath(), "<html></html>".getBytes());
     }
 
