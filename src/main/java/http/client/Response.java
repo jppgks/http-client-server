@@ -53,7 +53,7 @@ class Response {
 		return body;
 	}
 
-	private String getName() {
+	String getName() {
 		return this.name;
 	}
 
