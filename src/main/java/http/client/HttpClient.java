@@ -16,8 +16,8 @@ public class HttpClient {
             Response response = connection.execute(request);
             // Display response
             String path = "files/" + new Date().getTime();
-            response.save(path);
             response.print();
+            response.save(path);
 
             HashSet<Request> requests = response.handle();
             // order requests by host

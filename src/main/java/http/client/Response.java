@@ -94,7 +94,7 @@ class Response {
 	 */
 	HashSet<Request> handle() {
 		HashSet<Request> requests = new HashSet<>();
-		if (body != null && getHeaders().get("Content-Type").contains("text/html")) {
+		if (body != null && getHeaders().containsKey("Content-Type") && getHeaders().get("Content-Type").contains("text/html")) {
 			// Only retrieve other objects embedded in an HTML file
 			// retrieve objects of the pattern <... src="<location>" ...>
 			String pattern = "<.*? src=\"(.*?)\".*?>";
@@ -171,7 +171,7 @@ class Response {
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}
-		if (body != null) {
+		if (body != null && body.length > 0) {
 			File file = new File(path + getName());
 			// Show message if file already exists
 			if (file.exists()) {
@@ -210,21 +210,25 @@ class Response {
 	 *         MIME-type is looked up in the headers.
 	 */
 	private String getExtension() {
-		String contentType = getHeaders().get("Content-Type");
-		if (contentType.contains(";")) {
-			contentType = contentType.substring(0, contentType.indexOf(";"));
-		}
-		switch (contentType) {
-		case "text/plain":
-			return "txt";
-		case "application/javascript":
-			return "js";
-		case "image/x-icon":
-			return "ico";
-		case "text/javascript":
-			return "txt";
-		default:
-			return contentType.substring(contentType.indexOf("/") + 1);
+		if (getHeaders().containsKey("Content-Type")) {
+			String contentType = getHeaders().get("Content-Type");
+			if (contentType.contains(";")) {
+				contentType = contentType.substring(0, contentType.indexOf(";"));
+			}
+			switch (contentType) {
+			case "text/plain":
+				return "txt";
+			case "application/javascript":
+				return "js";
+			case "image/x-icon":
+				return "ico";
+			case "text/javascript":
+				return "txt";
+			default:
+				return contentType.substring(contentType.indexOf("/") + 1);
+			}
+		} else {
+			return "";
 		}
 	}
 
