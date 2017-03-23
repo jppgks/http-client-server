@@ -6,18 +6,15 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.OptionalInt;
 import java.util.OptionalLong;
 import java.util.stream.Stream;
-
-import com.sun.xml.internal.ws.util.StringUtils;
 
 public class HttpServer {
 
 	static String path;
 
 	public static void main(String[] args) throws IOException {
-		intializePath();
+		initializePath();
 		ServerSocket serverSocket = new ServerSocket(8080);
 		while (true) {
 			Socket clientSocket = serverSocket.accept();
@@ -32,7 +29,7 @@ public class HttpServer {
 	 * 
 	 * @throws IOException
 	 */
-	private static void intializePath() throws IOException {
+	private static void initializePath() throws IOException {
 		path = "files";
 		Path p = Paths.get(path);
 		if (!(Files.exists(p) && Files.isDirectory(p))) {

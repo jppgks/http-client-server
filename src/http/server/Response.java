@@ -29,8 +29,19 @@ class Response {
         addDefaultHeaders();
     }
 
+    /**
+     * Constructor for generating a "100 Continue" response.
+     * Requires no headers and can only be sent when the HTTP version is 1.1.
+     */
+    Response() {
+        this.statusCode = 100;
+        this.httpVersion = "HTTP/1.1";
+    }
+
     private String getReasonPhrase() {
         switch (statusCode) {
+            case 100:
+                return "Continue";
             case 200:
                 return "OK";
             case 304:

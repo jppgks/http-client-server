@@ -1,5 +1,7 @@
 package http.client;
 
+import http.Method;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -7,8 +9,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import http.Method;
 
 /**
  * Stores relevant response attributes.
@@ -84,14 +84,6 @@ class Response {
 		this.name = name;
 	}
 
-	private String getHost() {
-		return this.host;
-	}
-
-	private int getPort() {
-		return this.port;
-	}
-
 	/**
 	 * Retrieves other objects on the page and creates a Request for them
 	 */
@@ -134,7 +126,7 @@ class Response {
 					String newPath = getName().substring(0, getName().lastIndexOf("/"));
 					path = newPath + "/" + path;
 				}
-				requests.add(new Request(Method.GET, getHost(), getPort(), path));
+				requests.add(new Request(Method.GET, host, port, path));
 			} else {
 				// remove protocol (if present)
 				if (path.startsWith("http://")) {

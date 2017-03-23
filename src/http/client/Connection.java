@@ -54,6 +54,17 @@ class Connection {
 
 		// Generate response
 		int statusCode = Integer.parseInt(readLine(inFromServer).split(" ")[1]);
+		// Process status code 100
+		if (statusCode == 100) {
+			// Read empty newline
+			readLine(inFromServer);
+			// Print status
+			System.out.println("CONNECTION - Response with status code 100 received. Continuing...");
+			System.out.println();
+			// Read new statuscode
+			statusCode = Integer.parseInt(readLine(inFromServer).split(" ")[1]);
+		}
+		// Continue with response
 		HashMap<String, String> headers = readHeaders(inFromServer);
 		Response response;
 		if (request.getMethod() != Method.HEAD) {

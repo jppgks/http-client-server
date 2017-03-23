@@ -1,5 +1,11 @@
 package http.server;
 
+import http.Method;
+import http.server.exceptions.BadRequestException;
+import http.server.exceptions.FileNotFoundException;
+import http.server.exceptions.InternalServerException;
+import http.server.exceptions.ServerException;
+
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -17,12 +23,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-
-import http.Method;
-import http.server.exceptions.BadRequestException;
-import http.server.exceptions.FileNotFoundException;
-import http.server.exceptions.InternalServerException;
-import http.server.exceptions.ServerException;
 
 public class ServerThread implements Runnable {
 
@@ -96,8 +96,8 @@ public class ServerThread implements Runnable {
 
 	}
 
-	private Request readRequest() throws BadRequestException, SocketTimeoutException, SocketException {
-		Request request = null;
+	private Request readRequest() throws ServerException, SocketTimeoutException, SocketException {
+		Request request;
 
 		String firstLine = readLine();
 		if (Arrays.stream(Method.values()).noneMatch(e -> e.getName().equals(firstLine.split(" ")[0]))) {
@@ -107,6 +107,15 @@ public class ServerThread implements Runnable {
 		Method method = Method.valueOf(firstLine.split(" ")[0]);
 		String file = firstLine.split(" ")[1];
 		String httpVersion = firstLine.split(" ")[2];
+
+		if (httpVersion.equals("HTTP/1.1")) {
+			try {
+				// Send "100 Continue" response
+				send(new Response());
+			} catch (IOException e) {
+				throw new InternalServerException();
+			}
+		}
 
 		HashMap<String, String> headers = readHeaders();
 
@@ -205,12 +214,17 @@ public class ServerThread implements Runnable {
 	}
 
 	private void send(Response response) throws IOException {
+		// Write status line
 		outToClient.writeBytes(response.getStatusLine() + "\r\n");
-		for (Map.Entry<String, String> entry : response.getHeaders().entrySet()) {
-			outToClient.writeBytes(entry.getKey() + ": " + entry.getValue() + "\r\n");
+		// Write headers
+		if (response.getHeaders() != null) {
+			for (Map.Entry<String, String> entry : response.getHeaders().entrySet()) {
+				outToClient.writeBytes(entry.getKey() + ": " + entry.getValue() + "\r\n");
+			}
 		}
+		// Write newline
 		outToClient.writeBytes("\r\n");
-
+		// Write body
 		if (response.getBody() != null) {
 			outToClient.write(response.getBody());
 		}
