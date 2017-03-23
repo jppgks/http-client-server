@@ -1,5 +1,7 @@
 package http.client;
 
+import static http.StringOperations.isRelativePath;
+
 import http.Method;
 
 import java.io.File;
@@ -193,16 +195,6 @@ class Response {
 				e.printStackTrace();
 			}
 		}
-	}
-
-	/**
-	 * Checks for a given path whether it is relative or not.
-	 * 
-	 * @param path
-	 * @return boolean that indicates whether the given path is relative or not
-	 */
-	private boolean isRelativePath(String path) {
-		return !(path.startsWith("http://") || path.startsWith("https://") || path.startsWith("//"));
 	}
 
 	/**

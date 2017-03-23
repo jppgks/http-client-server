@@ -1,7 +1,6 @@
 package http.server;
 
-import http.Method;
-import http.server.exceptions.BadRequestException;
+import static http.StringOperations.jsonEscape;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,6 +8,9 @@ import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.util.Date;
 import java.util.HashMap;
+
+import http.Method;
+import http.server.exceptions.BadRequestException;
 
 public class Request {
     private final Method method;
@@ -88,11 +90,6 @@ public class Request {
             e.printStackTrace();
         }
         return json;
-    }
-    
-    // TODO: place in other file, along with other methods that can be reused
-    public String jsonEscape(String in) {
-    	return in.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t");
     }
 
     @Override
