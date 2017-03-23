@@ -9,6 +9,10 @@ import java.util.HashMap;
  */
 class Response {
 
+    public int getStatusCode() {
+        return statusCode;
+    }
+
     private int statusCode;
     private HashMap<String, String> headers;
     private byte[] body;

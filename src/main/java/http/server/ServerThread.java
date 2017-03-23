@@ -149,9 +149,9 @@ public class ServerThread implements Runnable {
 			// read file
 			Path path;
 			if (request.getFile().endsWith("/")) {
-				path = Paths.get(HttpServer.path + request.getFile() + "index.html");
+				path = Paths.get(HttpServer.getPath() + request.getFile() + "index.html");
 			} else {
-				path = Paths.get(HttpServer.path + request.getFile());
+				path = Paths.get(HttpServer.getPath() + request.getFile());
 			}
 
 			if (Files.exists(path) && Files.isRegularFile(path)) {
@@ -202,7 +202,7 @@ public class ServerThread implements Runnable {
 	 * @return {@code true} if modified since, {@code false} otherwise.
 	 * @throws BadRequestException
 	 */
-	private boolean fileIsModified(Path path, String since) throws BadRequestException {
+	boolean fileIsModified(Path path, String since) throws BadRequestException {
 		System.out.println("Since " + since);
 		// 3 possible formats
 		// rfc1123
