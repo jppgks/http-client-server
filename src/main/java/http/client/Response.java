@@ -4,6 +4,7 @@ import http.Method;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -81,7 +82,11 @@ class Response {
 			// name has no extension
 			name += "." + getExtension();
 		}
-		this.name = name;
+		try {
+			this.name = java.net.URLDecoder.decode(name, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -161,6 +166,11 @@ class Response {
 	 *            Path to the place where the file will be saved
 	 */
 	void save(String path) {
+		try {
+			path = java.net.URLDecoder.decode(path, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
 		if (body != null) {
 			File file = new File(path + getName());
 			// Show message if file already exists

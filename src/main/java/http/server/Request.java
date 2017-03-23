@@ -5,6 +5,7 @@ import http.server.exceptions.BadRequestException;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.util.Date;
 import java.util.HashMap;
@@ -35,7 +36,11 @@ public class Request {
         }
 
         this.method = method;
-        this.file = file;
+        try {
+			this.file = java.net.URLDecoder.decode(file, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			throw new BadRequestException();
+		}
         this.httpVersion = httpVersion;
         this.headers = headers;
         this.message = message;

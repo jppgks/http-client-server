@@ -1,5 +1,7 @@
 package http.client;
 
+import java.io.UnsupportedEncodingException;
+
 import http.Method;
 
 /**
@@ -75,7 +77,11 @@ class Request {
         this.method = method;
         this.host = host;
         this.port = 80;
-        this.file = file;
+        try {
+			this.file = java.net.URLDecoder.decode(file, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
         this.body = "";
     }
 
