@@ -16,32 +16,32 @@ import java.util.regex.Pattern;
 class Response {
 
 	private int statusCode;
-	private HashMap<String, String> header;
+	private HashMap<String, String> headers;
 	private byte[] body;
 	private String name;
 	private String host;
 	private int port;
 
-	Response(int statusCode, HashMap<String, String> header, byte[] body, String host, int port, String name)
+	Response(int statusCode, HashMap<String, String> headers, byte[] body, String host, int port, String name)
 			throws IOException {
 		this.statusCode = statusCode;
-		this.header = header;
+		this.headers = headers;
 		this.body = body;
 		setName(name);
 		this.host = host;
 		this.port = port;
 	}
 
-	Response(int statusCode, HashMap<String, String> header, String host, int port, String name) {
+	Response(int statusCode, HashMap<String, String> headers, String host, int port, String name) {
 		this.statusCode = statusCode;
-		this.header = header;
+		this.headers = headers;
 		setName(name);
 		this.host = host;
 		this.port = port;
 	}
 
-	private HashMap<String, String> getHeader() {
-		return this.header;
+	HashMap<String, String> getHeaders() {
+		return this.headers;
 	}
 
 	int getStatusCode() {
@@ -89,7 +89,7 @@ class Response {
 	 */
 	HashSet<Request> handle() {
 		HashSet<Request> requests = new HashSet<>();
-		if (body != null && getHeader().get("Content-Type").contains("text/html")) {
+		if (body != null && getHeaders().get("Content-Type").contains("text/html")) {
 			// Only retrieve other objects embedded in an HTML file
 			// retrieve objects of the pattern <... src="<location>" ...>
 			String pattern = "<.*? src=\"(.*?)\".*?>";
@@ -200,7 +200,7 @@ class Response {
 	 *         MIME-type is looked up in the headers.
 	 */
 	private String getExtension() {
-		String contentType = getHeader().get("Content-Type");
+		String contentType = getHeaders().get("Content-Type");
 		if (contentType.contains(";")) {
 			contentType = contentType.substring(0, contentType.indexOf(";"));
 		}
@@ -224,12 +224,12 @@ class Response {
 	void print() {
 		System.out.println("Status code: " + this.statusCode);
 		System.out.println();
-		this.header.forEach((key, value) -> System.out.println(key + ": " + value));
+		this.headers.forEach((key, value) -> System.out.println(key + ": " + value));
 		System.out.println("\r\n" + new String(getBody()));
 	}
 
 	String getRedirectLocation() {
 		// Get value of Location header
-		return this.header.get("Location");
+		return this.headers.get("Location");
 	}
 }

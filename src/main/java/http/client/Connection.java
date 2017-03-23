@@ -80,7 +80,7 @@ class Connection {
 		}
 
 		// Redirect if needed
-		if (String.valueOf(response.getStatusCode()).charAt(0) == '3') {
+		if (String.valueOf(response.getStatusCode()).charAt(0) == '3' && response.getHeaders().containsKey("Location")) {
 			if (nbRedirects > 10) {
 				// break endless loops of redirects
 				return response;
