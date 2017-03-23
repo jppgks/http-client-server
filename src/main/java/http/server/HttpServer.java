@@ -36,13 +36,8 @@ public class HttpServer {
 		p.toFile().mkdirs();
 		// Find folder with files most recently received by client
 		Stream<Path> files = Files.list(p);
-		OptionalLong folder = files
-				.filter(f -> Files.isDirectory(f))
-				.map(f -> f.getFileName())
-				.map(f -> f.toString())
-				.filter(f -> f.matches("[0-9]+"))
-				.mapToLong(f -> Long.parseLong(f))
-				.max();
+		OptionalLong folder = files.filter(f -> Files.isDirectory(f)).map(f -> f.getFileName()).map(f -> f.toString())
+				.filter(f -> f.matches("[0-9]+")).mapToLong(f -> Long.parseLong(f)).max();
 
 		files.close();
 		// If such folder exists,

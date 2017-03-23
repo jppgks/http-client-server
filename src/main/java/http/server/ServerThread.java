@@ -1,11 +1,5 @@
 package http.server;
 
-import http.Method;
-import http.server.exceptions.BadRequestException;
-import http.server.exceptions.FileNotFoundException;
-import http.server.exceptions.InternalServerException;
-import http.server.exceptions.ServerException;
-
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -22,7 +16,14 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
+
+import http.Method;
+import http.server.exceptions.BadRequestException;
+import http.server.exceptions.FileNotFoundException;
+import http.server.exceptions.InternalServerException;
+import http.server.exceptions.ServerException;
 
 public class ServerThread implements Runnable {
 
@@ -202,12 +203,27 @@ public class ServerThread implements Runnable {
 	 * @throws BadRequestException
 	 */
 	private boolean fileIsModified(Path path, String since) throws BadRequestException {
-		DateFormat df = new SimpleDateFormat();
+		System.out.println("Since " + since);
+		// 3 possible formats
+		// rfc1123
+		DateFormat df = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.ENGLISH);
 		Date sinceDate;
 		try {
 			sinceDate = df.parse(since);
 		} catch (ParseException e) {
-			throw new BadRequestException();
+			try {
+				// rfc850
+				df = new SimpleDateFormat("EEEEEEEEE, dd-MMM-yy HH:mm:ss zzz", Locale.ENGLISH);
+				sinceDate = df.parse(since);
+			} catch (ParseException e1) {
+				try {
+					// asctime with one day character
+					df = new SimpleDateFormat("EEE MMM d HH:mm:ss yyyy", Locale.ENGLISH);
+					sinceDate = df.parse(since);
+				} catch (ParseException e2) {
+					throw new BadRequestException();
+				}
+			}
 		}
 		Date lastModified = new Date(path.toFile().lastModified());
 		return lastModified.after(sinceDate);

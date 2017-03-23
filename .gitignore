@@ -52,3 +52,4 @@ fabric.properties
 /bin/
 /server/
 /.gradle/
+/build/
