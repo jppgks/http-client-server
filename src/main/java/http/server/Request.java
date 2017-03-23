@@ -2,7 +2,6 @@ package http.server;
 
 import http.Method;
 import http.server.exceptions.BadRequestException;
-import jdk.nashorn.internal.ir.debug.JSONWriter;
 
 import java.io.File;
 import java.io.IOException;

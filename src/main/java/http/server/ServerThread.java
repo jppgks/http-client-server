@@ -134,7 +134,7 @@ public class ServerThread implements Runnable {
 		return request;
 	}
 
-	private Response handle(Request request) throws ServerException {
+	Response handle(Request request) throws ServerException {
 		String httpVersion = request.getHttpVersion();
 		byte[] message;
 		Response response;
@@ -158,7 +158,7 @@ public class ServerThread implements Runnable {
 					headers.put("Content-Type", Files.probeContentType(path));
 					// Check if page is modified since time given in header
 					// (if given)
-					String since = request.getHeaders().getOrDefault("If-Modified-Since", null);
+					String since = request.getHeaders().get("If-Modified-Since");
 					if (since == null || fileIsModified(path, since)) {
 						// Page was modified since time given in header, or
 						// no If-Modified-Since in header
