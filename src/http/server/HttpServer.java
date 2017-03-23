@@ -32,9 +32,9 @@ public class HttpServer {
 	private static void initializePath() throws IOException {
 		path = "files";
 		Path p = Paths.get(path);
-		if (!(Files.exists(p) && Files.isDirectory(p))) {
-			throw new AssertionError();
-		}
+		// Create files directory if nonexistent
+		p.toFile().mkdirs();
+		// Find folder with files most recently received by client
 		Stream<Path> files = Files.list(p);
 		OptionalLong folder = files
 				.filter(f -> Files.isDirectory(f))
@@ -45,8 +45,9 @@ public class HttpServer {
 				.max();
 
 		files.close();
-
+		// If such folder exists,
 		if (folder.isPresent()) {
+			// serve files from that directory now
 			path += "/" + String.valueOf(folder.getAsLong());
 		}
 		System.out.println("Root directory: " + path);
