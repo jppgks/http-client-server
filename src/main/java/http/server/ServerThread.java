@@ -90,9 +90,17 @@ public class ServerThread implements Runnable {
 
 			// close connection
 			socket.close();
+			outToClient.close();
+			inFromClient.close();
 			System.out.println("SERVERTHREAD - Connection closed");
-		} catch (IOException e) {
-			e.printStackTrace();
+		} catch (IOException | NullPointerException e) {
+			try {
+				socket.close();
+				outToClient.close();
+				inFromClient.close();
+			} catch (Exception e1) {
+				e1.printStackTrace();
+			}
 		}
 
 	}

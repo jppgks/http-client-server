@@ -239,7 +239,9 @@ class Response {
 		System.out.println("Status code: " + this.statusCode);
 		System.out.println();
 		this.headers.forEach((key, value) -> System.out.println(key + ": " + value));
-		System.out.println("\r\n" + new String(getBody()));
+		if (getBody() != null) {
+			System.out.println("\r\n" + new String(getBody()));			
+		}
 	}
 
 	String getRedirectLocation() {
