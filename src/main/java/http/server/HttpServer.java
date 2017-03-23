@@ -11,6 +11,10 @@ import java.util.stream.Stream;
 
 public class HttpServer {
 
+	public static String getPath() {
+		return path;
+	}
+
 	static String path;
 
 	public static void main(String[] args) throws IOException {
