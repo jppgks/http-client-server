@@ -1,14 +1,16 @@
 package http.client;
 
-import http.Method;
+import static http.IO.readHeaders;
+import static http.IO.readLine;
+import static http.IO.readMessage;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.Arrays;
 import java.util.HashMap;
+
+import http.Method;
 
 class Connection {
 	private final String host;
@@ -80,7 +82,8 @@ class Connection {
 		}
 
 		// Redirect if needed
-		if (String.valueOf(response.getStatusCode()).charAt(0) == '3' && response.getHeaders().containsKey("Location")) {
+		if (String.valueOf(response.getStatusCode()).charAt(0) == '3'
+				&& response.getHeaders().containsKey("Location")) {
 			if (nbRedirects > 10) {
 				// break endless loops of redirects
 				return response;
@@ -90,7 +93,8 @@ class Connection {
 				// Generate new request
 				Request newRequest = new Request(request.getMethod(), response.getRedirectLocation());
 
-				// only execute new request when host and file are not the same as the current request
+				// only execute new request when host and file are not the same
+				// as the current request
 				if (newRequest.getHost().equals(request.getHost()) && newRequest.getFile().equals(request.getFile())) {
 					return response;
 				}
@@ -120,130 +124,6 @@ class Connection {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
-
-	private String readLine(BufferedInputStream in) {
-		StringBuilder sb = new StringBuilder();
-		while (sb.lastIndexOf("\r\n") == -1) {
-			try {
-				int ch = in.read();
-				sb.append((char) ch);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-		String line = sb.toString();
-		// remove line-end characters at the end
-		line = line.substring(0, line.length() - 2);
-
-		return line;
-	}
-
-	private byte[] readBytes(BufferedInputStream in, int number) {
-		byte[] data = new byte[number];
-		int bytesRead = 0;
-		int newRead;
-		try {
-			while (bytesRead < number) {
-				if (in.available() > 0) {
-
-				}
-				newRead = in.read(data, bytesRead, number - bytesRead);
-				if (newRead == -1) {
-					if (bytesRead == 0) {
-						return null;
-					} else {
-						return Arrays.copyOf(data, bytesRead);
-					}
-				} else {
-					bytesRead += newRead;
-				}
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return data;
-	}
-
-	private HashMap<String, String> readHeaders(BufferedInputStream in) {
-		HashMap<String, String> headers = new HashMap<>();
-
-		String header = null;
-		String value = null;
-		String line;
-		boolean stop = false;
-		while (!stop) {
-			line = readLine(in);
-			if (line.startsWith(" ") || line.startsWith("\t")) {
-				// lines beginning with spaces or tabs belong to the previous
-				// header line
-				line = line.trim();
-				value.concat(line);
-			} else {
-				// put last header + value in map
-				if (header != null) {
-					headers.put(header, value);
-				}
-
-				if (line.isEmpty()) {
-					stop = true;
-				} else {
-					// read new header
-					header = line.substring(0, line.indexOf(":"));
-					value = line.substring(line.indexOf(":") + 1).trim();
-				}
-			}
-		}
-		return headers;
-	}
-
-	private byte[] readMessage(BufferedInputStream in, HashMap<String, String> headers) {
-		boolean chunkedTE = headers.containsKey("Transfer-Encoding")
-				&& "chunked".equals(headers.get("Transfer-Encoding"));
-		int size;
-		ByteArrayOutputStream stream = new ByteArrayOutputStream();
-		try {
-			if (chunkedTE) {
-				// Read chunked message
-				boolean stop = false;
-				while (!stop) {
-					// read line with chunk size
-					String line = readLine(in);
-					if (line.isEmpty()) {
-						line = readLine(in);
-					}
-					if (line.contains(";")) {
-						size = Integer.parseInt(line.substring(0, line.indexOf(";")), 16);
-					} else {
-						size = Integer.parseInt(line, 16);
-					}
-
-					if (size == 0) {
-						stop = true;
-					}
-					// read chunk
-					stream.write(readBytes(in, size));
-				}
-			} else {
-				if (headers.containsKey("Content-Length")) {
-					size = Integer.parseInt(headers.get("Content-Length"));
-					// read number of bytes specified by Content-Length
-					stream.write(readBytes(in, size));
-				} else {
-					// read to the end (until the connection is closed)
-					// read all bytes one by one
-					byte[] bt;
-					while ((bt = readBytes(in, 1)) != null) {
-						stream.write(bt);
-					}
-				}
-			}
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		return stream.toByteArray();
 	}
 
 	String getHost() {

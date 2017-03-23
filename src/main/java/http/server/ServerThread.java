@@ -1,7 +1,10 @@
 package http.server;
 
+import static http.IO.readHeaders;
+import static http.IO.readLine;
+import static http.IO.readMessage;
+
 import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
@@ -60,13 +63,13 @@ public class ServerThread implements Runnable {
 					headers.put("Content-Type", "text/html");
 					send(new Response(e.getStatusCode(), headers, body.getBytes(), request.getHttpVersion()));
 				}
-				
+
 				if (request == null) {
 					// timeout: break the while loop
 					closed = true;
 					break;
 				}
-				
+
 				// Print request to standard output
 				System.out.println(request.toString());
 				// Handle request and send response back to client
@@ -108,7 +111,7 @@ public class ServerThread implements Runnable {
 	private Request readRequest() throws ServerException, SocketTimeoutException, SocketException {
 		Request request;
 
-		String firstLine = readLine();
+		String firstLine = readLine(inFromClient);
 		if (Arrays.stream(Method.values()).noneMatch(e -> e.getName().equals(firstLine.split(" ")[0]))) {
 			// HTTP Method not supported
 			throw new BadRequestException();
@@ -126,14 +129,14 @@ public class ServerThread implements Runnable {
 			}
 		}
 
-		HashMap<String, String> headers = readHeaders();
+		HashMap<String, String> headers = readHeaders(inFromClient);
 
 		if (method == Method.POST || method == Method.PUT) {
 			// Read message
-			byte[] body = readMessage(headers);
+			byte[] body = readMessage(inFromClient, headers);
 			// Read (optional) footers
 			if (headers.containsKey("Transfer-Encoding") && "chunked".equals(headers.get("Transfer-Encoding"))) {
-				HashMap<String, String> footers = readHeaders();
+				HashMap<String, String> footers = readHeaders(inFromClient);
 				headers.putAll(footers);
 			}
 			request = new Request(method, file, httpVersion, headers, body);
@@ -252,133 +255,5 @@ public class ServerThread implements Runnable {
 		if (response.getBody() != null) {
 			outToClient.write(response.getBody());
 		}
-	}
-
-	private HashMap<String, String> readHeaders() throws SocketTimeoutException, SocketException {
-		HashMap<String, String> headers = new HashMap<>();
-
-		String header = null;
-		String value = null;
-		String line;
-		boolean stop = false;
-		while (!stop) {
-			line = readLine();
-			if (line.startsWith(" ") || line.startsWith("\t")) {
-				// lines beginning with spaces or tabs belong to the previous
-				// header line
-				line = line.trim();
-				value.concat(line);
-			} else {
-				// put last header + value in map
-				if (header != null) {
-					headers.put(header, value);
-				}
-
-				if (line.isEmpty()) {
-					stop = true;
-				} else {
-					// read new header
-					header = line.substring(0, line.indexOf(":"));
-					value = line.substring(line.indexOf(":") + 1).trim();
-				}
-			}
-		}
-		return headers;
-	}
-
-	private byte[] readMessage(HashMap<String, String> headers) {
-		boolean chunkedTE = headers.containsKey("Transfer-Encoding")
-				&& "chunked".equals(headers.get("Transfer-Encoding"));
-		int size;
-		ByteArrayOutputStream stream = new ByteArrayOutputStream();
-		try {
-			if (chunkedTE) {
-				// Read chunked message
-				boolean stop = false;
-				while (!stop) {
-					// read line with chunk size
-					String line = readLine();
-					if (line.isEmpty()) {
-						line = readLine();
-					}
-					if (line.contains(";")) {
-						size = Integer.parseInt(line.substring(0, line.indexOf(";")), 16);
-					} else {
-						size = Integer.parseInt(line, 16);
-					}
-
-					if (size == 0) {
-						stop = true;
-					}
-					// read chunk
-					stream.write(readBytes(size));
-				}
-			} else {
-				if (headers.containsKey("Content-Length")) {
-					size = Integer.parseInt(headers.get("Content-Length"));
-					// read number of bytes specified by Content-Length
-					stream.write(readBytes(size));
-				} else {
-					// read to the end (until the connection is closed)
-					// read all bytes one by one
-					byte[] bt;
-					while ((bt = readBytes(1)) != null) {
-						stream.write(bt);
-					}
-				}
-			}
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		return stream.toByteArray();
-	}
-
-	private String readLine() throws SocketException, SocketTimeoutException {
-		StringBuilder sb = new StringBuilder();
-		while (sb.lastIndexOf("\r\n") == -1) {
-			try {
-				int ch = inFromClient.read();
-				sb.append((char) ch);
-			} catch (SocketTimeoutException | SocketException e) {
-				throw e;
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-		String line = sb.toString();
-		// remove line-end characters at the end
-		line = line.substring(0, line.length() - 2);
-
-		return line;
-	}
-
-	private byte[] readBytes(int number) throws SocketTimeoutException {
-		byte[] data = new byte[number];
-		int bytesRead = 0;
-		int newRead;
-		try {
-			while (bytesRead < number) {
-				if (inFromClient.available() > 0) {
-
-				}
-				newRead = inFromClient.read(data, bytesRead, number - bytesRead);
-				if (newRead == -1) {
-					if (bytesRead == 0) {
-						return null;
-					} else {
-						return Arrays.copyOf(data, bytesRead);
-					}
-				} else {
-					bytesRead += newRead;
-				}
-			}
-		} catch (SocketTimeoutException e) {
-			throw e;
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return data;
 	}
 }
