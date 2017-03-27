@@ -1,3 +1,15 @@
+apply plugin: 'application'
+
+mainClassName = 'client.Main'
+
+applicationDefaultJvmArgs = ['-ea']
+
 dependencies {
     compile project(':util')
+}
+
+run {
+    if (project.hasProperty('method') && project.hasProperty('host') && project.hasProperty('port')) {
+        args project.getProperty('method'), project.getProperty('host'), project.getProperty('port')
+    }
 }

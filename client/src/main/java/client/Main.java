@@ -5,7 +5,7 @@ import util.Method;
 import java.io.IOException;
 import java.util.*;
 
-public class HttpClient {
+public class Main {
     public static void main(String args[]) {
         // Parse arguments [HTTPCommand, URI, Port] into request
         Request request = generateRequestFromArgs(args);
@@ -73,7 +73,7 @@ public class HttpClient {
     private static Request generateRequestFromArgs(String[] args) {
         assert args.length == 3;
         // Check support for requested method
-        assert Arrays.stream(Method.values()).anyMatch(e -> e.getName().equals(args[0])) : "Given HTTP method not supported";
+        assert Arrays.stream(Method.values()).anyMatch(e -> e.getName().equals(args[0])) : "Given HTTP method not supported: " + args[0];
         // Parse command line arguments (HTTPCommand, URI, Port)
         Method method = Method.valueOf(args[0]);
         String address = args[1];

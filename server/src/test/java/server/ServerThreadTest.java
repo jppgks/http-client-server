@@ -25,7 +25,7 @@ import java.util.HashMap;
 import static org.mockito.Mockito.*;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(HttpServer.class)
+@PrepareForTest(Main.class)
 public class ServerThreadTest {
 
     private Request request;
@@ -50,9 +50,9 @@ public class ServerThreadTest {
         headers.put("If-Modified-Since", "Fri, 31 Dec 1999 23:59:59 GMT");
         request = new Request(Method.GET, file, "HTTP/1.1", headers);
 
-        // Mock server.HttpServer getPath call
-        PowerMockito.mockStatic(HttpServer.class);
-        when(HttpServer.getPath()).thenReturn("files");
+        // Mock server.Main getPath call
+        PowerMockito.mockStatic(Main.class);
+        when(Main.getPath()).thenReturn("files");
     }
 
     /**
@@ -62,7 +62,7 @@ public class ServerThreadTest {
      */
     private void createIndexHtmlFile() throws IOException {
         // Create index.html in files directory
-        String path = HttpServer.getPath() + "/1";
+        String path = Main.getPath() + "/1";
         Paths.get(path).toFile().mkdirs();
         File file = Paths.get(path + "/index.html").toFile();
         Files.write(file.toPath(), "<html></html>".getBytes());

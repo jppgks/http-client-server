@@ -9,7 +9,7 @@ import java.nio.file.Paths;
 import java.util.OptionalLong;
 import java.util.stream.Stream;
 
-public class HttpServer {
+public class Main {
 
 	public static String getPath() {
 		return path;
