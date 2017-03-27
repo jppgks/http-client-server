@@ -2,6 +2,15 @@
 output/
 files/
 
+# Build folders
+build/
+
+# Eclipse Core
+.project
+
+# JDT-specific (Eclipse Java Development Tools)
+.classpath
+
 # Compiled class file
 *.class
 
@@ -29,6 +38,8 @@ hs_err_pid*
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 .idea/
 
+*.iml
+
 ## File-based project format:
 *.iws
 
@@ -50,6 +61,5 @@ crashlytics-build.properties
 fabric.properties
 
 /bin/
-/server/
 /.gradle/
 /build/
