@@ -6,7 +6,7 @@ to learn Socket programming and get familiarized with the basics of distributed 
 
 ## Run server
 ```shell
-# 🐳 Pulls image, then runs server publishing port 8080 on localhost
+# 🐳  Pulls image, then runs server publishing port 8080 on localhost
 docker run -d -p 8080:8080 jppgks/http-server
 ```
 
@@ -14,7 +14,6 @@ Interact with the server at `localhost:8080`! 🎉
 
 ## Run client
 ```shell
-cd client
-# Modify parameters as you see fit
-gradle run -Pmethod="GET" -Phost="localhost" -Pport="8080"
+# Modify parameters as you see fit, find server IP with `docker inspect <container-id>`
+docker run -e METHOD="GET" -e HOST="172.17.0.2" -e PORT=8080 jppgks/http-client
 ```
