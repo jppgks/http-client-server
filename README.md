@@ -7,13 +7,13 @@ to learn Socket programming and get familiarized with the basics of distributed 
 ## Run server
 ```shell
 # 🐳  Pulls image, then runs server publishing port 8080 on localhost
-docker run -d -p 8080:8080 jppgks/http-server
+docker run --name "bernard" -d -p 8080:8080 jppgks/http-server
 ```
 
 Interact with the server at `localhost:8080`! 🎉
 
 ## Run client
 ```shell
-# Modify parameters as you see fit, find server IP with `docker inspect <container-id>`
-docker run -e METHOD="GET" -e HOST="172.17.0.2" -e PORT=8080 jppgks/http-client
+# Modify parameters as you see fit
+docker run --network container:"bernard" -it -e METHOD="POST" -e HOST="localhost" -e PORT=8080 jppgks/http-client
 ```
