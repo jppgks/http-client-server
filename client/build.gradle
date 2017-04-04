@@ -9,6 +9,7 @@ dependencies {
 }
 
 run {
+    standardInput = System.in
     if (project.hasProperty('method') && project.hasProperty('host') && project.hasProperty('port')) {
         args project.getProperty('method'), project.getProperty('host'), project.getProperty('port')
     }

@@ -4,5 +4,5 @@ FROM jppgks/http:latest
 EXPOSE 8080
 
 WORKDIR server/
-CMD gradle run --console plain
+CMD gradle run -q
 
