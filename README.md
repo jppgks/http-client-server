@@ -14,6 +14,9 @@ Interact with the server at `localhost:8080`! 🎉
 
 ## Run client
 ```shell
-# Modify parameters as you see fit
-docker run --network container:"bernard" -it jppgks/http-client -Pmethod="GET" -Phost="localhost" -Pport="8080"
+# Modify arguments (method, host, port) as you see fit
+docker run -it \
+       --network container:"bernard" \
+       jppgks/http-client \
+       -Pmethod="GET" -Phost="localhost" -Pport="8080"
 ```
